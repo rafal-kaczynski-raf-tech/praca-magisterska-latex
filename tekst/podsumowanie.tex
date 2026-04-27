@@ -1,16 +1,74 @@
-\chapter{Podsumowanie}
+\chapter{Badania symulacyjne, weryfikacja wyników i~podsumowanie}
 \label{ch:podsumowanie}
 
-Podsumowanie zazwyczaj nie potrzebuje podrozdziałów. Jednak gdyby osiągnęło około 5 stron, to można już zacząć planować jakiś podział tego rozdziału. Ponieważ podsumowanie odnosi się do zrealizowanej pracy i~uzyskanych wyników, to sensownym wydaje się napisać je w~czasie przeszłym. Poniżej sugestie odnośnie tego, co w~podsumowaniu powinno się znaleźć.
+% Rozdział 5 wg konspektu — łączy walidację oprogramowania, eksperymenty
+% i~podsumowanie pracy. W~konspekcie ten rozdział jest jednym wspólnym blokiem.
 
-Akapit przypomnienia celu i~głównych założeń pracy. Jeśli w~trakcie realizacji pracy dyplomowej pewne wstępne cele szczegółowe lub założenia uległy weryfikacji i~być może subtelnym zmianom, to warto o~tym szczerze i~otwarcie napisać. Realizację pracy dyplomowej można sobie wyobrażać jako wyprawę do ściśle określonego celu ale po trasie, którą w~trakcie trwania podróży trzeba jednak urealniać, ze względu na napotkane warunki.
+\section{Metodyka eksperymentów}
+\label{sec:metodyka}
 
-Podsumowanie i~dyskusja uzyskanych efektów. Nie powinno być to powtórzenie analizy rezultatów z~rozdziału poprzedniego a~raczej przedstawienie wniosków końcowych i~zwrócenie uwagi czytelnika na szczególnie ciekawe wyniki.
+% TODO: założenia metodyczne — bezpośrednie nakładanie przebiegów Python na
+% serie referencyjne wyeksportowane z~PSIM jako empiryczny dowód poprawności
+% równań fizycznych i~solwera.
 
-Odniesienie uzyskanych rezultatów do \underline{aktualnego} stanu wiedzy. Najlepiej, gdyby to odniesienie zostało poparte porównaniem konkretnych wyników uzyskanych w~toku realizacji pracy dyplomowej z~danymi prezentowanymi w~aktualnej literaturze -- wystarczy choćby jeden artykuł. Nie oznacza to, że trzeba uzyskać wyniki lepsze, niż prezentowane w~publikacjach naukowych.
+\section{Walidacja przebiegów względem PSIM}
+\label{sec:walidacja-psim}
 
-Przedstawienie możliwości dalszego rozwoju podjętych działań i~badań. Te perspektywy można opisać w~kontekście trudności lub nawet niepowodzeń napotkanych podczas realizacji pracy dyplomowej. W~pracy magisterskiej można nieco ambitniej przedyskutować otwarte zagadnienia badawcze i~to, jak niniejsza praca dyplomowa może pomóc podjąć te wyzwania.
+\subsection{Otwarta pętla (silnik fizyczny)}
+\label{subsec:val-openloop}
 
-Można dodać akapit bardziej osobisty, dotyczący nowego doświadczenia zdobytego podczas realizacji pracy.
+% TODO: porównanie przebiegów w~otwartej pętli, MAE, dokumentacja zgodności
+% z~modelem PSIM (Krok 1 / 2.5 prac wcześniejszych).
 
-Jedno, końcowe zdanie subiektywnej oceny, w~jakim stopniu udało się zrealizować założony cel pracy i~spełnić postawione we wstępie wymagania (np.: częściowo, w~dużym stopniu, całkowicie).
+\subsection{Zamknięta pętla z~MF-BB}
+\label{subsec:val-closedloop}
+
+% TODO: porównanie przebiegów ze sterowaniem MF-BB, weryfikacja zgodności
+% z~referencją z~PSIM.
+
+\section{Stress-testy układu}
+\label{sec:stress}
+
+\subsection{Ekstremalne zmniejszenie pojemności kondensatora}
+\label{subsec:cap}
+
+% TODO: zachowanie cyfrowego sterownika przy malejącej pojemności filtra,
+% wykresy tętnień napięcia/prądu w~funkcji C.
+
+\subsection{Skok obciążenia i~referencji}
+\label{subsec:transient}
+
+% TODO: dynamika reakcji na skokowe wymuszenia.
+
+\section{Porównanie strojenia AI vs~strojenia eksperckiego}
+\label{sec:ai-vs-manual}
+
+% TODO: metryki pokazujące przewagę zautomatyzowanego strojenia PSO względem
+% klasycznych, manualnych strategii eksperckich (overshoot, ripple, czas
+% ustalania).
+
+\section{Podsumowanie}
+\label{sec:podsumowanie}
+
+\subsection{Realizacja celów pracy}
+\label{subsec:realizacja-celow}
+
+% TODO: weryfikacja stopnia realizacji celów postawionych w~rozdziale 1.
+
+\subsection{Trudności napotkane podczas realizacji}
+\label{subsec:trudnosci}
+
+% TODO: opis trudności na etapie developmentu — np. NMP, dobór kroku
+% całkowania, GIL Pythona, walidacja parametrów pasożytniczych względem PSIM.
+
+\subsection{Wnioski końcowe}
+\label{subsec:wnioski}
+
+% TODO: wnioski dotyczące przydatności języka Python do budowy Bliźniaków
+% Cyfrowych w~energoelektronice.
+
+\subsection{Kierunki dalszych prac}
+\label{subsec:przyszlosc}
+
+% TODO: dodanie interfejsów API, integracja z~głębokimi sieciami neuronowymi,
+% rozszerzenie na inne topologie przekształtników.

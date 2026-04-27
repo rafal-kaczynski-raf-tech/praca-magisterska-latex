@@ -1,19 +1,73 @@
-\chapter{Hyperputer optymalizacji telechronicznej}
+\chapter{Architektura i~implementacja Bliźniaka Cyfrowego w~języku Python}
+\label{ch:realizacja}
 
-Ten rozdział powinien przedstawiać konkretne, autorskie osiągnięcia Dyplomantki lub Dyplomanty. Tytuł rozdziału i~podrozdziałów muszą być konkretne i~bezpośrednio powiązane z~tematem pracy dyplomowej. Ich liczba i~zawartość może się zmieniać w~zależności od tematyki pracy dyplomowej.
+% Rozdział 3 wg konspektu — informatyczny rdzeń pracy. Projekt, architektura,
+% implementacja oprogramowania symulacyjnego w~Python. Nacisk na czystość kodu,
+% OOP, optymalizacje wydajnościowe, modularność.
 
-Między tytułem rozdziału a~podrozdziału musi być choćby krótki tekst. Może to być na przykład ogólne wprowadzenie czytelnika w~ten rozdział.
+\section{Wymagania funkcjonalne i~niefunkcjonalne}
+\label{sec:wymagania}
 
-\section{Metodologia wykonania optymalizatora telechronicznego}
+% TODO: lista wymagań — dokładność symulacji, wydajność (czas rzędu mikrosekund),
+% rozszerzalność, zgodność z~PSIM jako oprogramowaniem referencyjnym.
 
-Metodologia czyli plan tego, w~jaki sposób i~z pomocą jakich narzędzi powinien zostać uzyskany oczekiwany rezultat, spełniający założenia celu pracy. Metodologia w~przypadku prac magisterskich powinna uwzględniać ,,element badawczy''.
+\section{Inżynieria odwrotna obwodu z~programu PSIM}
+\label{sec:reverse-eng}
 
-\section{Konstrukcja i~oprogramowanie hyperputera}
+% TODO: opis obwodu Buck-Boost w~PSIM, identyfikacja parametrów, wyprowadzenie
+% równań różniczkowych dla każdego stanu klucza, warianty pracy.
 
-Prezentacja konkretnych działań projektowych, technologicznych i~wykonawczych. To tu trzeba zaprezentować na przykład zaprojektowane urządzenie, obwód elektryczny albo napisane oprogramowanie. Ten tekst powinien być zilustrowany na przykład zdjęciami, schematami, listingami.
+\section{Architektura oprogramowania}
+\label{sec:architektura}
 
-\section{Testy hyperputera w~próżni doskonałej}
+\subsection{Paradygmat programowania obiektowego}
+\label{subsec:oop}
 
-Weryfikacja poprawności działania powstałego urządzenia lub oprogramowania. Opisy powinny opierać się o~dane zgromadzone w~tabelach i~zaprezentowane na wykresach.
+% TODO: uzasadnienie OOP, diagram klas, hierarchia modułów.
 
-Szczególnie w~tym podrozdziale praca magisterska powinna znacząco przewyższać złożonością prace inżynierskie poprzez zaprezentowanie i~omówienie wyników przeprowadzonych badań.
+\subsection{Modułowy podział odpowiedzialności}
+\label{subsec:moduly}
+
+% TODO: oddzielenie warstwy fizyki obwodowej od logiki algorytmu sterującego,
+% interfejsy między modułami.
+
+\section{Silnik fizyczny}
+\label{sec:silnik}
+
+\subsection{Numeryczna metoda Eulera}
+\label{subsec:euler}
+
+% TODO: wybór metody Eulera, krok całkowania (rzędu mikrosekund), analiza
+% stabilności i~dokładności numerycznej.
+
+\subsection{Implementacja równań stanu przetwornicy}
+\label{subsec:rownania}
+
+% TODO: prezentacja równań różniczkowych w~kodzie, listing kluczowego fragmentu
+% solwera.
+
+\section{Optymalizacja wydajnościowa}
+\label{sec:wydajnosc}
+
+\subsection{Wektoryzacja operacji z~biblioteką NumPy}
+\label{subsec:numpy}
+
+% TODO: wektoryzacja, struktury danych ndarray, krytyczne znaczenie przy
+% symulacjach wielkoskalowych (np. dla PSO).
+
+\subsection{Profilowanie i~optymalizacja krytycznych ścieżek}
+\label{subsec:profiling}
+
+% TODO: pomiar wydajności, optymalizacje punktowe.
+
+\section{Walidacja silnika fizycznego}
+\label{sec:walidacja-fizyki}
+
+% TODO: porównanie przebiegów Python vs PSIM (otwarta pętla), MAE, dokumentacja
+% wyników z~Kroku 1 (i~2.5 — walidacja BB) prac wcześniejszych.
+
+\section{Repozytorium kodu i~kontrola wersji}
+\label{sec:repo}
+
+% TODO: struktura repozytorium, konwencje commitów, śledzenie eksperymentów
+% z~użyciem Git.

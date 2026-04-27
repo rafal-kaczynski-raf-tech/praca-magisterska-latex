@@ -1,0 +1,58 @@
+\chapter{Zastosowanie sztucznej inteligencji w~optymalizacji sterowania}
+\label{ch:ai}
+
+% Rozdział 4 wg konspektu — integracja silnika DT z~algorytmem PSO. Matematyka
+% roju, funkcja kosztu, automatyczna ewaluacja parametrów MF-BB, złożoność
+% obliczeniowa i~zrównoleglanie.
+
+\section{Wprowadzenie do metaheurystyk w~strojeniu sterowników}
+\label{sec:metaheurystyki}
+
+% TODO: motywacja użycia metod metaheurystycznych zamiast ręcznego strojenia,
+% krótki przegląd alternatyw (algorytmy genetyczne, symulowane wyżarzanie),
+% uzasadnienie wyboru PSO.
+
+\section{Algorytm Optymalizacji Rojem Cząstek (PSO)}
+\label{sec:pso}
+
+\subsection{Podstawy matematyczne}
+\label{subsec:pso-math}
+
+% TODO: wektory prędkości, pozycje cząstek, równania aktualizacji, znaczenie
+% komponentów kognitywnego i~socjalnego.
+
+\subsection{Hiperparametry i~konfiguracja}
+\label{subsec:pso-config}
+
+% TODO: wagi inercji, współczynniki c1/c2, wielkość roju, warunki stopu.
+
+\section{Funkcja kosztu (Fitness Function)}
+\label{sec:fitness}
+
+\subsection{Penalizacja przeregulowań napięcia}
+\label{subsec:penalty-overshoot}
+
+% TODO: matematyczna formulacja kary za overshoot napięcia wyjściowego.
+
+\subsection{Penalizacja tętnień prądu}
+\label{subsec:penalty-ripple}
+
+% TODO: matematyczna formulacja kary za tętnienia prądu cewki.
+
+\subsection{Ważenie składników i~normalizacja}
+\label{subsec:fitness-weights}
+
+% TODO: dobór wag, normalizacja składników, dyskusja kompromisów.
+
+\section{Integracja PSO z~silnikiem fizycznym}
+\label{sec:pso-integration}
+
+% TODO: pętla optymalizacji — PSO uruchamia symulację dla każdej cząstki,
+% interfejs między modułem AI a~silnikiem.
+
+\section{Złożoność obliczeniowa i~zrównoleglanie}
+\label{sec:zlozonosc}
+
+% TODO: analiza kosztu obliczeniowego, omówienie ograniczeń jednowątkowego
+% Pythona (GIL), zastosowane metody zrównoleglania (multiprocessing,
+% wektoryzacja).
