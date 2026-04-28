@@ -73,3 +73,23 @@ W~ramach realizacji postawionego celu zaplanowano i~wykonano następujące zadan
 \section{Oczekiwane rezultaty}
 \label{sec:rezultaty}
 //jestem tutaj//
+Zwieńczeniem tego projektu będzie dostarczenie w pełni działającej aplikacji w~języku Python, zdolnej do precyzyjnego symulowania układu Buck-Boost z~rozdzielczością czasową rzędu pojedynczych mikrosekund. Publiczna dostępność kodu w systemie kontroli wersji Git, zapewni pełną transparentność i~reprodukowalność uzyskanych wyników.Wiarygodność narzędzia zostanie  wykazana poprzez nałożenie sygnałów napięcia i~prądu na dane referencyjne z~oprogramowania PSIM. Część badawcza pracy ma na celu wykazanie skuteczności metody PSO w~zautomatyzowanej redukcji tętnień napięcia wyjściowego oraz przeregulowań w~warunkach pracy z~małymi pojemnościami filtra, stanowiąc efektywną alternatywę dla manualnego strojenia kontrolerów.
+
+\section{Założenia architektoniczne}
+\label{sec:zalozenia}
+
+Praca powstaje w~ramach kierunku Informatyka Stosowana, co determinuje szczególne wymagania stawiane wytwarzanemu kodowi. Naczelnym założeniem projektowym jest zastosowanie paradygmatu programowania obiektowego (ang. \emph{Object-Oriented Programming}, OOP) z~wyraźnym rozdziałem warstw odpowiedzialności:
+
+\begin{itemize}
+	\item \emph{warstwa fizyki obwodowej} -- klasy reprezentujące parametry, stany i~równania ruchu przekształtnika, niezależne od logiki sterowania;
+	\item \emph{warstwa sterowania} -- klasy implementujące algorytmy regulacji (MF-BB), operujące wyłącznie na zdefiniowanych interfejsach pomiarowych;
+	\item \emph{warstwa optymalizacji} -- klasy realizujące algorytm PSO, traktujące pętlę symulacyjną jako zewnętrzny obiekt-funkcję celu;
+	\item \emph{warstwa eksperymentu i~wizualizacji} -- moduły uruchomieniowe oraz prezentacyjne, oddzielone od logiki rdzenia.
+\end{itemize}
+
+Taka separacja funkcjonalności umożliwia niezależną ewolucję komponentów, na przykład zastąpienie sterownika MF-BB regulatorem PI, bez ingerencji w~pozostałe warstwy.Wykorzystanie systemu Git do zarządzania kodem źródłowym, pozwala na precyzyjne śledzenie ewolucji projektu oraz dokumentowanie kolejnych etapów eksperymentów.
+
+\section{Struktura pracy}
+\label{sec:struktura}
+
+Struktura niniejszej pracy podzielona jest na pięć rozdziałów merytorycznych. Rozdział pierwszy (\nameref{ch:wstep}) wprowadza czytelnika w~tematykę pracy, formułuje cel oraz zakres prowadzonych badań. Rozdział drugi (\nameref{ch:analiza}) systematyzuje wiedzę o współczesnych metodach sterowania przekształtnikami, takimi jak techniki Bang-Bang~\cite{tatari2024mfbb} czy zaawansowane sterowanie predykcyjne~\cite{tatari2025splitcost}. Rozdział trzeci (\nameref{ch:realizacja}) stanowi rdzeń informatyczny pracy i~zawiera techniczny opis implementacji obiektowego modelu Bliźniaka Cyfrowego w języku Pytho. Rozdział czwarty (\nameref{ch:ai}) jest poświęcony integracji opracowanego środowiska symulacyjnego z~algorytmami sztucznej inteligencji, ze szczególnym uwzględnieniem PSO. Rozdział piąty (\nameref{ch:podsumowanie}) prezentuje wyniki przeprowadzonych badań symulacyjnych, ich walidacji w środowisku PSIM oraz sformułowaniu wniosków z realizacji projektu.
