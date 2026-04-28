@@ -1,65 +1,71 @@
-![Przykładowa strona tytułowa](./EE-dyplom.jpg)
+# Master's Thesis
 
 *[POLSKI](README.md)*
 
-## About template
+---
 
-The thesis template for Faculty of Electrical Engineering at WUT conforming to [WUT Rector Directive 4/2022](https://www.bip.pw.edu.pl/Wewnetrzne-akty-prawne/Dokumenty-Rektora-PW/Zarzadzenia-Rektora/2022/Zarzadzenie-nr-4-2022-Rektora-PW-z-dnia-27-01-2022) (in Polish).
+**Title:** *Modeling and control of a power electronic converter using artificial intelligence methods in the Python environment*
 
-All "must have" regulations are fulfilled.
+**Author:** Rafał Kaczyński &nbsp;·&nbsp; student ID **342208**
+**Supervisor:** prof. dr hab. inż. Grzegorz Iwański
+**University:** Warsaw University of Technology, Faculty of Electrical Engineering
+**Institute:** Institute of Control and Industrial Electronics
+**Field:** Applied Informatics &nbsp;·&nbsp; **Specialization:** Informatics in Business
+**Defense year:** 2026
 
-Most options are set according to guidance rules described in Directives. All differences are within acceptable restrictions of the style modifications. Changes introduced for thesis clarity:
+---
 
-  * increased interline light (line-skip)
-  * emphasized chapter headers
-  * accented with color and clickable references
+## About the thesis
 
-Template is only for single-author theses, according to applicable editorial requirements.
+This thesis presents the design and implementation of a custom **Digital Twin** of a bidirectional Buck-Boost DC-DC power converter, written in **Python**. The simulation environment is integrated with a metaheuristic **Particle Swarm Optimization (PSO)** algorithm, used for automated tuning of a model-free **Bang-Bang (MF-BB)** controller. The work is software-engineering and optimization oriented, culminating in empirical validation against commercial **PSIM** software.
 
-## Using template in Overleaf
+**Keywords:** Digital Twin · Python · Particle Swarm Optimization (PSO) · Buck-Boost converter · model-free control · software engineering.
 
-  * Thanks to [Overleaf](https://www.overleaf.com/), where one can setup a free-of-charge account, it is possible to edit thesis in a browser.
-  * There is no need to install anything to make use of LaTeX.
-  * Thesis content can be edited at the same time more than one person. It provides possibility to workgroup between Supervisor and Student.
-  * It is easy to download resulting PDF file and ZIP package with current thesis.
-  * Stable version of this template is distributed in Overleaf as [template](https://www.overleaf.com/latex/templates/ee-dyplom/qtrkhzdfcfvv).
-  * Template version in Overleaf might be outdated to the GitHub version due to delay in updating templates in Overleaf that employs manual verification of template. Therefore Overleaf version might be not fully conformant with current editorial requirements.
-  * The newest published version and development version of the template are on [GitHub](https://github.com/SP5LMA/EE-dyplom).
-  * Template from GitHub can be downloaded and manually uploaded to private project in Overleaf.
+## Related repository
 
-## Using template - first steps
+Source code of the Digital Twin (physics engine + MF-BB controller + PSO):
+👉 [github.com/rafal-kaczynski-raf-tech/praca-magisterska](https://github.com/rafal-kaczynski-raf-tech/praca-magisterska)
 
-1. Template is prepared for XeLaTeX so if you are using Overleaf then open "Menu" and modify "Compiler" to "XeLaTeX" because the default one is different. Compilation with pdfLaTeX was tested and is possible but not recommended. For "manual" compilation of bibliography the biber application should be used.
-2. Open file **EE-dyplom.tex** and setup proper type of your thesis in line **documentclass** by modifying value of **thesis** variable choosing of of: **inz**, **mgr**, **bsc**, **msc**
-3. Personalize other fields in thee file **EE-dyplom.tex**
-4. Modify, change and generate content in the directory **tekst**
-5. Add pictures (figures) in the directory **rysunki** (gfx rather should not be used)
+## Repository structure
 
-## Reporting issues
+| File / directory | Contents |
+|---|---|
+| `EE-dyplom.tex` | Main file — title page, abstract, document structure |
+| `EE-dyplom.bib` | Bibliography (BibTeX) |
+| `EE-dyplom.cls` | Template LaTeX class (do not modify) |
+| `tekst/` | Chapter content (`wstep.tex`, `analiza.tex`, `realizacja.tex`, `ai.tex`, `podsumowanie.tex`) |
+| `rysunki/` | Figures, plots, and schematics used in the thesis |
+| `gfx/` | Template graphics (WUT logos, headers) — do not modify |
+| `Makefile` | Manual compilation script (XeLaTeX + Biber) |
 
-Thank you in advance for reporting observed problems and errors. You can use GitHub issues system or mail me: <lukasz.makowski.ee@pw.edu.pl>.
+## How to compile
 
-While reporting a problem please provide:
+### Overleaf (recommended)
 
-1. Problem description
-2. Used operating system
-3. Software used to edit files (eg.: Kile, Vim)
-4. Used LaTeX compiler (eg.: XeLaTeX, pdfLaTeX)
-5. Other, important aspects of configuration (eg.: codepage)
+1. Import the project from GitHub: *New Project → Import from GitHub*.
+2. Open **Menu → Settings → Compiler** and select **XeLaTeX** (pdfLaTeX will not compile correctly).
+3. Click **Recompile**.
 
-## Acknowledgments
+### Locally (macOS / Linux with TeX Live)
 
-Hereby I would like to thank other Authors whose templates were my inspiration:
+```bash
+make            # XeLaTeX → Biber → XeLaTeX → XeLaTeX
+make clean      # removes auxiliary files
+```
 
-  * prof. dr hab. inż. *Jacek Starzyński*, Faculty of Electrical Engineering, WUT
-  * *Artur M. Brodzki* i *Piotr Woźniak*, Faculty of Electronics and Information Technology, WUT
+## Thesis status
+
+Work in progress. Per-chapter progress is reflected in the commit history.
 
 ## License and copyright
 
-  * Template licensed with: CC-BY 4.0
-  * [Human-readable summary of the Attribution 4.0 International (CC BY 4.0) License](https://creativecommons.org/licenses/by/4.0/)
-  * Author: *Łukasz Makowski* <lukasz.makowski.ee@pw.edu.pl>
-  * [https://github.com/SP5LMA/EE-dyplom](https://github.com/SP5LMA/EE-dyplom)
+Thesis content (files in `tekst/`, `rysunki/` and `EE-dyplom.tex`, `EE-dyplom.bib`) — © Rafał Kaczyński, 2026. All rights reserved.
 
----------------------------------------------
+## Template attribution
 
+This thesis uses the **EE-dyplom** template for the Faculty of Electrical Engineering at Warsaw University of Technology.
+
+* Template author: *Łukasz Makowski* &lt;lukasz.makowski.ee@pw.edu.pl&gt;
+* Template repository: [github.com/SP5LMA/EE-dyplom](https://github.com/SP5LMA/EE-dyplom)
+* Template license: [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+* The template conforms to the [WUT Rector Directive 4/2022](https://www.bip.pw.edu.pl/Wewnetrzne-akty-prawne/Dokumenty-Rektora-PW/Zarzadzenia-Rektora/2022/Zarzadzenie-nr-4-2022-Rektora-PW-z-dnia-27-01-2022) (in Polish) on the formatting of diploma theses.

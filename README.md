@@ -1,67 +1,71 @@
-![Przykładowa strona tytułowa](./EE-dyplom.jpg)
+# Praca dyplomowa magisterska
 
 *[ENGLISH](README.en.md)*
 
-## O szablonie
+---
 
-Szablon prac dyplomowych na Wydziale Elektrycznym PW jest zgodny z obowiązującym [Zarządzeniem JM Rektora PW 4/2022](https://www.bip.pw.edu.pl/Wewnetrzne-akty-prawne/Dokumenty-Rektora-PW/Zarzadzenia-Rektora/2022/Zarzadzenie-nr-4-2022-Rektora-PW-z-dnia-27-01-2022), dotyczącym formatowania prac dyplomowych.
+**Tytuł:** *Modelowanie i sterowanie przekształtnika energoelektronicznego z wykorzystaniem metod sztucznej inteligencji w środowisku Python*
 
-Wszystkie zasady "wymagane" są spełnione.
+**Autor:** Rafał Kaczyński &nbsp;·&nbsp; nr albumu **342208**
+**Promotor:** prof. dr hab. inż. Grzegorz Iwański
+**Uczelnia:** Politechnika Warszawska, Wydział Elektryczny
+**Instytut:** Instytut Sterowania i Elektroniki Przemysłowej
+**Kierunek:** Informatyka Stosowana &nbsp;·&nbsp; **Specjalność:** Informatyka w Biznesie
+**Rok obrony:** 2026
 
-Większość opcji ustawiona zgodnie z zaleceniami opisanymi w Zarządzeniach. Wszystkie różnice są w ramach dopuszczalnych zakresów ingerencji w styl. Dla poprawy czytelności pracy:
+---
 
-  * zwiększone światło międzywierszowe
-  * wyróżniające się nagłówki rozdziałów
-  * wyróżnione kolorem, klikalne odnośniki
+## O pracy
 
-Szablon jest tylko dla prac jednoautorskich, zgodnie z obowiązującymi wymaganiami redakcyjnymi.
+Praca przedstawia projekt oraz implementację autorskiego **Bliźniaka Cyfrowego** (ang. *Digital Twin*) dwukierunkowego przekształtnika prądu stałego typu Buck-Boost w języku **Python**. Środowisko symulacyjne zostało zintegrowane z metaheurystycznym algorytmem **Optymalizacji Rojem Cząstek (PSO)**, służącym do automatycznego strojenia bezmodelowego sterownika typu **Bang-Bang (MF-BB)**. Praca ma charakter programistyczno-optymalizacyjny, a jej zwieńczeniem jest empiryczna walidacja wyników z komercyjnym oprogramowaniem **PSIM**.
 
-## Użycie szablonu w Overleaf
+**Słowa kluczowe:** Bliźniak Cyfrowy · Python · Optymalizacja Rojem Cząstek (PSO) · przekształtnik Buck-Boost · sterowanie bezmodelowe · inżynieria oprogramowania.
 
-  * Dzięki [Overleaf](https://www.overleaf.com/), gdzie wystarczy założyć darmowe konto, można pracę dyplomową edytować w przeglądarce.
-  * Nie ma konieczności instalowania czegokolwiek dodatkowego aby skorzystać z możliwości LaTeXa.
-  * Zawartość pracy może edytować w tym samym momencie więcej niż jedna osoba. Daje to możliwość pracy grupowej Promotora i Studenta.
-  * Z Overleaf łatwo pobrać wynikowy plik PDF i paczkę ZIP z aktualnym stanem pracy.
-  * Wersja stabilna tego szablonu jest udostępniona w Overleaf jako [template](https://www.overleaf.com/latex/templates/ee-dyplom/qtrkhzdfcfvv).
-  * Wersja szablonu udostępniania jako *template* w Overleaf może być nieaktualna względem wersji z Github ze względu na opóźnienie aktualizacji szablonów przez Overleaf i robioną tam ręcznie weryfikację zawartości plików. Może przez to być niezgodna z obowiązującymi wymogami edytorskimi.
-  * Najnowsza wersja opublikowana i wersje rozwojowe szablonu znajdują się na [Github](https://github.com/SP5LMA/EE-dyplom).
-  * Szablon z Github można pobrać i wgrać go w samodzielnie utworzony projekt na Overleaf.
+## Powiązane repozytorium
 
-## Użycie szablonu - pierwsze kroki
+Kod źródłowy Bliźniaka Cyfrowego (silnik fizyczny + sterownik MF-BB + PSO):
+👉 [github.com/rafal-kaczynski-raf-tech/praca-magisterska](https://github.com/rafal-kaczynski-raf-tech/praca-magisterska)
 
-1. Szablon jest przygotowany dla XeLaTeX więc jeśli używasz Overleaf to otwórz "Menu" i zmień "Compiler" na "XeLaTeX", gdyż domyślnie wybrany jest inny. Kompilacja za pomocą pdfLaTeX była testowana i jest możliwa ale jest niewskazana. Do "ręcznej" kompilacji bibliografii należy wykorzystać biber.
-2. Otwórz plik **EE-dyplom.tex** i ustaw właściwy typ swej pracy w linii **documentclass** wybierając dla zmiennej **thesis** jedną opcję spośród: **inz**, **mgr**, **bsc**, **msc**
-3. Spersonalizuj pozostałe pola w pliku **EE-dyplom.tex**
-4. Modyfikuj, zmieniaj i dodawaj treść w katalogu **tekst**
-5. Dodawaj rysunki w katalogu **rysunki** (gfx raczej nie używaj)
+## Struktura repozytorium
 
-## Zgłaszanie problemów
+| Plik / katalog | Zawartość |
+|---|---|
+| `EE-dyplom.tex` | Plik główny — strona tytułowa, streszczenie, abstract, struktura |
+| `EE-dyplom.bib` | Bibliografia (BibTeX) |
+| `EE-dyplom.cls` | Klasa LaTeX szablonu (nie modyfikować) |
+| `tekst/` | Treść rozdziałów (`wstep.tex`, `analiza.tex`, `realizacja.tex`, `ai.tex`, `podsumowanie.tex`) |
+| `rysunki/` | Rysunki, wykresy i schematy używane w pracy |
+| `gfx/` | Grafiki szablonu (loga PW, nagłówki) — nie modyfikować |
+| `Makefile` | Skrypt do ręcznej kompilacji (XeLaTeX + Biber) |
 
-Z góry dziękuję za zgłaszanie zauważonych problemów i błędów, które
-można przekazać mailem na adres: <lukasz.makowski.ee@pw.edu.pl>.
+## Jak skompilować
 
-Zgłaszając problem proszę podaj:
+### Overleaf (zalecane)
 
-1. Opis problemu
-2. Używany system operacyjny
-3. Używane oprogramowanie do edycji plików źródłowych (np.: Kile, Vim)
-4. Używany kompilator LaTeXa (np.: XeLaTeX, pdfLaTeX)
-5. Pozostałe, istotne aspekty konfiguracji (np.: strona kodowa).
+1. Importuj projekt z GitHub: *New Project → Import from GitHub*.
+2. Otwórz **Menu → Settings → Compiler** i wybierz **XeLaTeX** (kompilacja pdfLaTeX nie zadziała poprawnie).
+3. Kliknij **Recompile**.
 
+### Lokalnie (macOS / Linux z TeX Live)
 
-## Podziękowania
+```bash
+make            # XeLaTeX → Biber → XeLaTeX → XeLaTeX
+make clean      # usuwa pliki pomocnicze
+```
 
-Dziękuję innym Autorom, których szablonami mogłem się inspirować:
+## Status pracy
 
-  * prof. dr hab. inż. *Jacek Starzyński*, Wydział Elektryczny, PW
-  * *Artur M. Brodzki* i *Piotr Woźniak*, Wydział EiTI, PW
+Praca jest w trakcie pisania. Stan poszczególnych rozdziałów odzwierciedla historia commitów.
 
 ## Licencja i prawa autorskie
 
-  * Licencja szablonu: CC-BY 4.0
-  * [Skrócony tekst licencji Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-  * Autor: *Łukasz Makowski* <lukasz.makowski.ee@pw.edu.pl>
-  * [https://github.com/SP5LMA/EE-dyplom](https://github.com/SP5LMA/EE-dyplom)
+Treść pracy dyplomowej (pliki w katalogu `tekst/`, `rysunki/` oraz `EE-dyplom.tex`, `EE-dyplom.bib`) — © Rafał Kaczyński, 2026. Wszelkie prawa zastrzeżone.
 
----------------------------------------------
+## Atrybucja szablonu
 
+Praca korzysta z szablonu **EE-dyplom** dla Wydziału Elektrycznego Politechniki Warszawskiej.
+
+* Autor szablonu: *Łukasz Makowski* &lt;lukasz.makowski.ee@pw.edu.pl&gt;
+* Repozytorium szablonu: [github.com/SP5LMA/EE-dyplom](https://github.com/SP5LMA/EE-dyplom)
+* Licencja szablonu: [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+* Szablon jest zgodny z [Zarządzeniem JM Rektora PW 4/2022](https://www.bip.pw.edu.pl/Wewnetrzne-akty-prawne/Dokumenty-Rektora-PW/Zarzadzenia-Rektora/2022/Zarzadzenie-nr-4-2022-Rektora-PW-z-dnia-27-01-2022) dotyczącym formatowania prac dyplomowych.
