@@ -8,8 +8,37 @@
 \section{Wymagania funkcjonalne i~niefunkcjonalne}
 \label{sec:wymagania}
 
-% TODO: lista wymagań — dokładność symulacji, wydajność (czas rzędu mikrosekund),
-% rozszerzalność, zgodność z~PSIM jako oprogramowaniem referencyjnym.
+Przed przystąpieniem do fazy projektowej architektury systemu zdefiniowano zbiór kryteriów i założeń, jakim musi sprostać budowane narzędzie informatyczne. Zgodnie z klasycznymi zasadami inżynierii oprogramowania, specyfikację tę podzielono na obszar wymagań \emph{funkcjonalnych} (określających zadania i operacje realizowane przez system) oraz \emph{niefunkcjonalnych} (definiujących parametry jakościowe i warunki ich implementacji).
+
+\subsection{Wymagania funkcjonalne}
+\label{subsec:wym-funkcjonalne}
+
+Opracowywana aplikacja Bliźniaka Cyfrowego w swojej ostatecznej wersji musi zapewniać:
+
+\begin{itemize}
+    \item \textbf{F1.} Przeprowadzanie symulacji numerycznych dwukierunkowego przekształtnika synchronicznego typu boost w dziedzinie czasu, ze szczególnym uwzględnieniem wyznaczania przebiegów napięcia na kondensatorze wyjściowym oraz prądu płynącego przez dławik, dla zadanych warunków brzegowych i przedziału czasowego.
+    \item \textbf{F2.} Efektywne uruchamianie bezmodelowego algorytmu sterowania Bang-Bang wzbogaconego o mechanizm estymacji prądu obciążenia (MF-BB), realizowane w dyskretnych krokach czasowych właściwych dla mikrokontrolera, w całkowitej separacji od kroku numerycznego silnika symulacji fizycznej~\cite{tatari2024mfbb}.
+    \item \textbf{F3.} Integrację danych z~referencyjnym środowiskiem PSIM realizowaną za pośrednictwem plików tekstowych w~formacie CSV, co obejmuje zarówno importowanie zewnętrznych przebiegów, jak i~eksportowanie raportów walidacyjnych.
+    \item \textbf{F4.} Automatyczne generowanie wykresów porównawczych zestawiających wyniki obliczeń z Pythona i programu PSIM, wraz z wyliczaniem tabelarycznych wskaźników dopasowania w zdefiniowanych przedziałach czasu.
+    \item \textbf{F5.} Konstrukcję symulatora jako modułu wielokrotnego użytku o jawnym i przejrzystym interfejsie API, umożliwiającym jego wielokrotne wywoływanie wewnątrz pętli optymalizacyjnej algorytmu cząsteczkowego (PSO) przy zmiennych wektorach nastaw regulatora.
+\end{itemize}
+
+\subsection{Wymagania niefunkcjonalne}
+\label{subsec:wym-niefunkcjonalne}
+
+Mając na uwadze badawczy profil projektu oraz standardy czystego kodu, sformułowano następujące wymagania jakościowe i technologiczne względem tworzonego środowiska:
+
+\begin{itemize}
+    \item \textbf{N1 (dokładność).} Maksymalny błąd średniokwadratowy lub odchyłka wartości średnich napięcia wyjściowego i prądu cewki w stanie ustalonym pomiędzy autorskim symulatorem a modelem w środowisku PSIM nie może przekroczyć $1\,\%$. Wartość ta stanowi fundamentalne kryterium poprawności modelu.
+    \item \textbf{N2 (rozdzielczość czasowa).} Maksymalny dopuszczalny krok dyskretyzacji silnika fizycznego ustalono na poziomie $1~\mu\mathrm{s}$, co jest warunkiem koniecznym do poprawnego odwzorowania dynamicznych stanów przejściowych i przełączeń struktur półprzewodnikowych w układzie.
+    \item \textbf{N3 (wydajność).} Czas operacyjny pojedynczego przebiegu symulacji dla okna czasowego wynoszącego $100~\mathrm{ms}$ musi pozwalać na wykonanie setek iteracji w ramach jednego kroku algorytmu PSO. Przekłada się to na wymóg wydajnościowy rzędu pojedynczych sekund na jeden rdzeń logiczny procesora.
+    \item \textbf{N4 (modularność).} Narzucenie ścisłej separacji warstw (odpowiedzialnych kolejno za: modelowanie fizyczne obwodu, logikę sterowania, proces optymalizacji oraz prezentację wyników), co pozwala na modyfikację lub podmianę jednego bloku bez zakłócania pracy pozostałych składowych systemu.
+    \item \textbf{N5 (reprodukowalność).} Przechowywanie pełnej historii rozwoju kodu w systemie kontroli wersji Git, zagwarantowanie pełnego determinizmu obliczeń dla tożsamych konfiguracji startowych oraz jawna kontrola i definicja zewnętrznych bibliotek i zależności~\cite{chacon2014progit}.
+    \item \textbf{N6 (testowalność).} Objęcie poszczególnych modułów testami regresji w~celu zapewnienia, że refaktoryzacja lub optymalizacja kodu nie wpłynie negatywnie na stabilność i~powtarzalność wyników numerycznych poza ustalone pasmo tolerancji.
+    \item \textbf{N7 (otwartość).} Oparcie architektury wyłącznie na darmowych i otwartoźródłowych bibliotekach naukowo-badawczych ekosystemu Python -- w szczególności NumPy~\cite{harris2020numpy} oraz Matplotlib~\cite{hunter2007matplotlib} -- w celu wyeliminowania ograniczeń licencyjnych właściwych dla komercyjnego oprogramowania inżynierskiego.
+\end{itemize}
+
+Wprowadzone kryteria posiadają wymierny charakter i stanowią podstawę do weryfikacji poprawności działania oprogramowania na każdym etapie jego implementacji. W dalszej części tego rozdziału przedstawiono szczegóły implementacyjne realizujące poszczególne punkty: spełnienie założenia \textbf{N1} wykazano w sekcji~\nameref{sec:walidacja-fizyki}, koncepcję modułowości (\textbf{N4}) opisuje sekcja~\nameref{sec:architektura}, natomiast kwestie kontroli wersji (\textbf{N5}) porusza sekcja~\nameref{sec:repo}.
 
 \section{Inżynieria odwrotna obwodu z~programu PSIM}
 \label{sec:reverse-eng}
