@@ -43,8 +43,81 @@ Wprowadzone kryteria posiadają wymierny charakter i stanowią podstawę do wery
 \section{Inżynieria odwrotna obwodu z~programu PSIM}
 \label{sec:reverse-eng}
 
-% TODO: opis obwodu Buck-Boost w~PSIM, identyfikacja parametrów, wyprowadzenie
-% równań różniczkowych dla każdego stanu klucza, warianty pracy.
+Punktem wyjścia dla procesu modelowania matematycznego stał się referencyjny schemat obwodu, opracowany w środowisku PSIM i udostępniony przez promotora pracy. Struktura ta w sposób kompletny odwzorowuje część algorytmową oraz obwód główny przekształtnika energetycznego wraz z cyfrowym blokiem sterowania (C-block), realizującym algorytm MF-BB. Przeprowadzenie inżynierii odwrotnej wymagało realizacji trzech kluczowych etapów: identyfikacji struktury topologicznej układu wraz z określeniem ról poszczególnych komponentów, ekstrakcji wartości parametrów elektrycznych bezpośrednio z modelu referencyjnego oraz sformułowania układu równań różniczkowych opisujących stany dynamiczne konwertera dla każdego położenia kluczy energoelektronicznych.
+
+\subsection{Topologia układu mocy}
+\label{subsec:topologia}
+
+Na podstawie analizy struktury obwodu zidentyfikowano układ jako \emph{synchroniczny przekształtnik podwyższający napięcie} (ang. \emph{synchronous boost converter}). Konstrukcja ta stanowi specyficzną odmianę klasycznej topologii podwyższająco-obniżającej (Buck-Boost), w której tradycyjną parę złożoną z diody i klucza zastąpiono dwoma sterowanymi kluczami półprzewodnikowymi, co pozwala na dwukierunkowy przepływ energii~\cite{erickson2020}. Tego typu rozwiązanie układowe umożliwia zwrot energii zgromadzonej w polu magnetycznym dławika w obu kierunkach, dzięki czemu doskonale wpisuje się w specyfikację systemów mikrosieci prądu stałego współpracujących z magazynami energii.
+
+% TODO: dodać rysunek schematu — skopiuj plik bb-schemat.png z repozytorium kodu
+% (~/repos/py/demo/screeny/bb-schemat.png) do folderu rysunki/ i odkomentuj
+% poniższy blok \begin{figure}. Zweryfikuj też, czy podpis odpowiada rzeczywistemu
+% wycinkowi schematu PSIM, który zostanie wstawiony.
+%\begin{figure}[ht]
+%   \centering
+%   \includegraphics[width=0.85\textwidth]{rysunki/bb-schemat.png}
+%   \caption{Schemat referencyjnego synchronicznego przekształtnika boost w~środowisku PSIM wraz z~blokiem regulatora cyfrowego MF-BB.}
+%   \label{fig:bb-schemat}
+%\end{figure}
+
+W strukturze sprzętowej wyróżnić można cztery zasadnicze bloki: źródło napięcia stałego $V_{in}$ modelujące ogniwo zasilające sekcji niskonapięciowej, dławik $L$ stanowiący indukcyjny magazyn energii, obarczony pasożytniczą rezystancją szeregową uzwojenia $R_L$, parę kluczy półprzewodnikowych kluczowanych w sposób komplementarny (których stan logiczny opisuje binarna zmienna sterująca $s\in\{0,1\}$), a także kondensator wyjściowy $C$ połączony równolegle z obciążeniem rezystancyjnym $R_{obc}$, na którym ustala się napięcie wyjściowe $u_{dc}$.
+
+\subsection{Identyfikacja parametrów elektrycznych}
+\label{subsec:parametry}
+
+Nominalne wartości elementów pozyskano bezpośrednio z~okien właściwości komponentów zdefiniowanych w~schemacie PSIM, a~ich poprawność zweryfikowano poprzez analizę bilansu energetycznego w~stanie ustalonym (weryfikacja relacji $u_{dc}/i_{out}$ względem oczekiwanej rezystancji obciążenia). Zbiór parametrów konfiguracyjnych zaimplementowanych w~modelu matematycznym zestawiono w~tabeli~\ref{tab:parametry-obwodu}.
+
+\begin{table}[ht]
+    \centering
+    \caption{Parametry elektryczne referencyjnego obwodu odczytane ze schematu PSIM.}
+    \label{tab:parametry-obwodu}
+    \begin{tabular}{lll}
+        \hline
+        \textbf{Symbol} & \textbf{Wartość} & \textbf{Opis} \\
+        \hline
+        $V_{in}$  & $100~\mathrm{V}$       & napięcie zasilania (strona niskonapięciowa) \\
+        $L$       & $0{,}75~\mathrm{mH}$   & indukcyjność dławika \\
+        $R_L$     & $0{,}05~\Omega$        & pasożytnicza rezystancja uzwojenia dławika \\
+        $C$       & $200~\mu\mathrm{F}$    & pojemność kondensatora wyjściowego \\
+        $R_{obc}$ & $47{,}619~\Omega$      & rezystancja zastępcza obciążenia ($R_{32}\parallel R_{33}$) \\
+        $u_{ref}$ & $240~\mathrm{V}$       & napięcie zadane na wyjściu \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Przyjęta wartość rezystancji obciążenia wymaga dodatkowego wyjaśnienia: w~strukturze referencyjnej PSIM zastosowano układ dwóch połączonych równolegle rezystorów $R_{32}=1~\mathrm{k}\Omega$ oraz $R_{33}=50~\Omega$, co w~rezultacie daje rezystancję zastępczą o~wartości $R_{obc}=R_{32}\parallel R_{33}=47{,}619~\Omega$. Prawidłowość ta została niezależnie potwierdzona drogą empiryczną na~podstawie ilorazu wartości średnich napięcia i~prądu wyjściowego w~stanie ustalonym, wyznaczonych na~bazie wyeksportowanego zbioru danych CSV.
+
+\subsection{Wyprowadzenie równań dynamiki przekształtnika}
+\label{subsec:rownania-stanu}
+
+W~dalszych rozważaniach teoretycznych i~numerycznych wprowadzono następujące oznaczenia zmiennych stanu i~wielkości dynamicznych: $i_L(t)$~--~chwilowe natężenie prądu dławika, $u_{dc}(t)$~--~chwilowa wartość napięcia na~kondensatorze wyjściowym, $u_L(t)$~--~chwilowy spadek napięcia na~dławiku, $i_C(t)$~--~chwilowy prąd ładowania pojemności wyjściowej oraz $s(t)\in\{0,1\}$~--~binarny sygnał sterujący określający konfigurację łączników (wartość~1 definiuje stan zwarcia dławika do~masy, natomiast wartość~0 odpowiada połączeniu dławika z~obwodem wyjściowym). Symbole $u_L$ oraz $i_C$ wprowadzono dla zwięzłości notacji oraz dla zachowania zgodności z~implementacją kodu źródłowego (sekcja~\nameref{sec:silnik}). Szczegółowy wykaz wszystkich stosowanych symboli wraz z~ich jednostkami zamieszczono w~dedykowanym słowniku na~końcu rozprawy.
+
+Matematyczny model dynamiki przekształtnika determinowany jest przez układ dwóch sprzężonych równań różniczkowych pierwszego rzędu, których postać jest ściśle powiązana z~aktualną wartością sygnału $s$. Wykorzystując prawa sformułowane przez Kirchhoffa dla obu struktur topologicznych, wyprowadzono następujące zależności matematyczne~\cite{erickson2020}.
+
+Dla konfiguracji opisanej stanem \textbf{$s=1$} (załączenie dolnego klucza i~zwarcie dławika do~potencjału odniesienia) następuje odcięcie obwodu wejściowego od~kondensatora wyjściowego. Energia pobierana ze~źródła zasilania $V_{in}$ jest wówczas akumulowana w~polu magnetycznym indukcyjności, podczas gdy kondensator wyjściowy ulega rozładowaniu wyłącznie przez rezystancję obciążenia, co zapisać można jako:
+\begin{equation}
+    L\,\frac{di_L}{dt} = V_{in} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = -\frac{u_{dc}}{R_{obc}}.
+    \label{eq:state-s1}
+\end{equation}
+
+Dla konfiguracji opisanej stanem \textbf{$s=0$} (górny klucz w~stanie przewodzenia, dolny odcięty) dławik zostaje włączony w~obwód wyjściowy, przekazując zgromadzoną energię do~kondensatora oraz obciążenia:
+\begin{equation}
+    L\,\frac{di_L}{dt} = V_{in} - u_{dc} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = i_L - \frac{u_{dc}}{R_{obc}}.
+    \label{eq:state-s0}
+\end{equation}
+
+W~celu ułatwienia późniejszej implementacji programistycznej, oba stany pracy można zapisać w~sposób skonsolidowany za pomocą jawnego sparametryzowania zmienną logiczną $s$:
+\begin{equation}
+    \begin{aligned}
+        u_L &= V_{in} - (1-s)\,u_{dc} - R_L\,i_L, \\
+        i_C &= (1-s)\,i_L - \frac{u_{dc}}{R_{obc}}, \\
+        \frac{di_L}{dt} &= \frac{u_L}{L}, \qquad \frac{du_{dc}}{dt} = \frac{i_C}{C}.
+    \end{aligned}
+    \label{eq:state-unified}
+\end{equation}
+
+Powyższe relacje stanowią kompletny rdzeń matematyczny silnika fizycznego, którego algorytmizację w~kodzie źródłowym za pomocą jawnej metody Eulera szczegółowo omówiono w~sekcji~\nameref{sec:silnik}. Należy podkreślić, że sformułowany układ równań~\eqref{eq:state-unified} bezpośrednio odzwierciedla nieliniowy charakter i~zjawisko fazy nieminimalnej, nieodłącznie związane z~topologiami podwyższającymi napięcie. Można zauważyć, że nagłe zwiększenie współczynnika wypełnienia (oznaczające wydłużenie przedziału $s=1$) wywołuje w~pierwszym momencie spadek wartości napięcia $u_{dc}$, mimo że w~stanie ustalonym końcowym efektem jest jego wzrost. Implikacje tego zjawiska w~kontekście syntezy układu regulacji opisano szerzej w~rozdziale~\nameref{ch:analiza}.
 
 \section{Architektura oprogramowania}
 \label{sec:architektura}
