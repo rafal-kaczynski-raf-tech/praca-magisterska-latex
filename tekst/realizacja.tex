@@ -172,17 +172,48 @@ Wymiana danych wynikowych pomiędzy klasami \texttt{MFBBController} a~\texttt{Si
 \section{Silnik fizyczny}
 \label{sec:silnik}
 
+Rdzeniem Bliźniaka Cyfrowego jest silnik fizyczny -- moduł realizujący numeryczne rozwiązywanie układu równań różniczkowych~\eqref{eq:state-unified}, wyprowadzonych w~rozdziale~\nameref{sec:reverse-eng}. W~tej części pracy uargumentowano wybór jawnej metody całkowania oraz zaprezentowano detale implementacyjne modelu obwodowego w~języku Python, zwracając szczególną uwagę na~ścisłą zgodność zapisu programistycznego z~aparatem matematycznym.
+
 \subsection{Numeryczna metoda Eulera}
 \label{subsec:euler}
 
-% TODO: wybór metody Eulera, krok całkowania (rzędu mikrosekund), analiza
-% stabilności i~dokładności numerycznej.
+Zagadnienie początkowe dla układu zwyczajnych równań różniczkowych~\eqref{eq:state-unified} rozwiązano za~pomocą \emph{jawnej metody Eulera w~przód} (\emph{forward Euler method}). Dla dynamiki opisanej uogólnionym równaniem $\dot{\mathbf{x}}(t)=\mathbf{f}(t,\mathbf{x})$ z~warunkiem początkowym $\mathbf{x}(t_0)=\mathbf{x}_0$, technika ta opiera się na~przybliżeniu pochodnej za~pomocą ilorazu różnicowego przedniego. Prowadzi to do~następującej formuły rekurencyjnej~\cite{hairer1993}:
+\begin{equation}
+    \mathbf{x}_{n+1} = \mathbf{x}_n + \Delta t\,\mathbf{f}(t_n,\mathbf{x}_n),
+    \label{eq:euler-forward}
+\end{equation}
+w~której $\Delta t$ definiuje krok całkowania, a~wektor $\mathbf{x}_n=\mathbf{x}(t_n)$ reprezentuje estymowany stan układu w~chwili $t_n=t_0+n\Delta t$.
+
+Wybór tego -- w~teorii najprostszego -- algorytmu był podyktowany trzema kluczowymi przesłankami inżynierskimi, wynikającymi bezpośrednio z~charakterystyki modelowanego przekształtnika:
+
+\begin{itemize}
+    \item \textbf{nieciągłość funkcji podcałkowej.} Wektorowa funkcja pola~$\mathbf{f}$ silnie zależy od~dwustanowego sygnału sterującego $s(t)\in\{0,1\}$, który ulega skokowym zmianom w~momentach komutacji kluczy. Algorytmy wyższego rzędu (np.~Rungego--Kutty) opierają się na~wielokrotnym próbkowaniu prawej strony równania wewnątrz jednego interwału $\Delta t$. W~przypadku nieciągłości sygnału $\mathbf{f}$, procedury te generują systematyczne błędy interpolacji w~sąsiedztwie punktów przełączeń~\cite{hairer1993};
+    \item \textbf{złożoność obliczeniowa.} Wykonanie pojedynczego kroku w~metodzie Eulera wiąże się z~tylko jedną ewaluacją funkcji $\mathbf{f}$, podczas gdy klasyczna metoda RK4 wymaga aż czterech takich operacji. Biorąc pod~uwagę, że~wyznaczenie pojedynczego przebiegu wymaga wykonania rzędu $2\cdot 10^5$ iteracji (\textit{vide}~\ref{subsec:moduly}), redukcja narzutu obliczeniowego ma kluczowe znaczenie dla szybkości działania algorytmu PSO (\textbf{N3});
+    \item \textbf{zapas stabilności numerycznej.} Warunkiem zachowania stabilności jawnej metody Eulera dla obwodów o~charakterze sztywnym jest utrzymanie relacji $\Delta t\ll\tau_{\min}$, gdzie $\tau_{\min}$ to najkrótsza skala czasowa układu (okres oscylacji bądź stała czasowa). Najszybszą dynamiką w~badanym obwodzie cechuje się obwód rezonansowy $LC$ o~częstotliwości własnej $f_0=1/(2\pi\sqrt{LC})\approx 411~\mathrm{Hz}$ (okres $T_0\approx 2{,}43~\mathrm{ms}$), podczas gdy najkrótsza z~dyssypacyjnych stałych czasowych wynosi $\tau_L=L/R_L=15~\mathrm{ms}$. Zastosowanie kroku $\Delta t=0{,}5~\mu\mathrm{s}$ zapewnia proporcję $T_0/\Delta t\approx 4860$, co~gwarantuje margines stabilności o~trzy rzędy wielkości większy, niż jest to bezwzględnie wymagane.
+\end{itemize}
+
+Wartość interwału $\Delta t=0{,}5~\mu\mathrm{s}$ została dobrana zgodnie z~kryterium \textbf{N2} (sekcja~\nameref{sec:wymagania}), definiującym limit na~poziomie $1~\mu\mathrm{s}$. Ustalenie kroku o~połowę krótszego od~dopuszczalnego maksimum pozwala uzyskać zadowalającą wierność odwzorowania stanów przejściowych, a~jednocześnie idealnie synchronizuje się z~okresem próbkowania mikrokontrolera $T_s=10~\mu\mathrm{s}$. Oznacza to, że~na każdy cykl algorytmu sterującego przypada równo $N_{phys}=T_s/\Delta t=20$ kroków numerycznych, co~eliminuje konieczność wprowadzania interpolacji pomiędzy warstwą fizyki a~warstwą decyzyjną. Choć teoretyczny, globalny błąd metody Eulera narasta proporcjonalnie do~wielkości kroku $\mathcal{O}(\Delta t)$~\cite{hairer1993}, jego rzeczywista akumulacja jest redukowana przez naturalne tłumienie rezystancyjne układu, a~jej praktyczne znaczenie ograniczone przez stosunkowo niewielki krok całkowania. Poprawność takiego założenia została empirycznie potwierdzona w~procesie walidacji (sekcja~\nameref{sec:walidacja-fizyki}).
 
 \subsection{Implementacja równań stanu przetwornicy}
 \label{subsec:rownania}
 
-% TODO: prezentacja równań różniczkowych w~kodzie, listing kluczowego fragmentu
-% solwera.
+Realizacja programistyczna pojedynczego kroku całkowania została ujęta w~metodzie \texttt{step()} klasy \texttt{Converter} (zlokalizowanej w~module \texttt{converter.py}). Stanowi ona bezpośrednią translację formuły rekurencyjnej~\eqref{eq:euler-forward} na~grunt układu~\eqref{eq:state-unified}, co~zaprezentowano na~listingu~\ref{lst:converter-step}.
+
+\begin{lstlisting}[language=Python,caption={Pojedynczy krok jawnej metody Eulera dla synchronicznego przekształtnika boost.},label={lst:converter-step}]
+def step(self, s: int, dt: float) -> None:
+    """Jeden krok Eulera w przod przy stanie klucza s."""
+    p = self.p
+    v_L = p.V_in - (1.0 - s) * self.v_C - p.R_L * self.i_L
+    i_C = (1.0 - s) * self.i_L - self.v_C / p.R_load
+    self.i_L = self.i_L + v_L / p.L * dt
+    self.v_C = self.v_C + i_C / p.C * dt
+\end{lstlisting}
+
+Struktura kodu na~powyższym listingu ściśle podąża za~matematycznym opisem modelu. Dwie pierwsze instrukcje obliczają chwilowe wartości napięcia na~indukcyjności ($v_L$) oraz prądu kondensatora ($i_C$) wprost ze~wzoru~\eqref{eq:state-unified}. Sygnał wejściowy $s$ funkcjonuje tu jako algebraiczny przełącznik konfiguracji topologicznej. Kolejne dwie linie wykonują dyskretyzację zmiennych stanu (\texttt{self.i\_L} oraz \texttt{self.v\_C}) na~kolejną chwilę czasową. Kluczowe w~tej procedurze jest rygorystyczne przestrzeganie kolejności działań -- wektor pochodnych wyznaczany jest wyłącznie na~bazie stanu \emph{poprzedzającego} aktualizację, co~stanowi fundament całkowania jawnego~\cite{hairer1993}.
+
+Należy wyraźnie podkreślić, że~w~obrębie metody \texttt{step()} świadomie uniknięto wektoryzacji operacji. Wybór ten podyktowany jest charakterem sprzężenia modelu obwodowego z~modułem regulatora -- w~systemie dyskretnym sygnał $s$ nie ulega zmianie w~trakcie trwania jednego okresu próbkowania, a~jego nowa wartość generowana jest dopiero po~przetworzeniu najnowszych pomiarów. Pociąga to za~sobą konieczność iteracyjnego rozwiązywania obwodu w~domenie czasu, co~wyklucza zastosowanie wektorowych funkcji biblioteki NumPy bezpośrednio w~rdzeniu integracyjnym. Strategię ominięcia tej przeszkody wydajnościowej poprzez wektoryzację zapisu wyników i~przetwarzania końcowego omówiono w~sekcji~\nameref{sec:wydajnosc}.
+
+Kompletna pętla czasowa symulacji konstruowana jest poprzez wielokrotne wywoływanie metody \texttt{step()} wewnątrz podwójnej iteracji orkiestratora \texttt{Simulator}. Zewnętrzna pętla odmierza cykle mikrokontrolera (krok $T_s=10~\mu\mathrm{s}$), natomiast w~jej wnętrzu realizowanych jest równe $N_{phys}=20$ iteracji fizyki dla ustalonego, zablokowanego sygnału $s$. Taka struktura wiernie odwzorowuje realia pracy sprzętu, gdzie stany sprzętowych rejestrów PWM pozostają niezmienione pomiędzy kolejnymi przerwaniami kontrolera, podtrzymując sygnały bramkowe tranzystorów.
 
 \section{Optymalizacja wydajnościowa}
 \label{sec:wydajnosc}
