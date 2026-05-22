@@ -122,16 +122,52 @@ Powyższe relacje stanowią kompletny rdzeń matematyczny silnika fizycznego, kt
 \section{Architektura oprogramowania}
 \label{sec:architektura}
 
+Skuteczna realizacja założeń projektowych w~zakresie modułowości~(\textbf{N4}) oraz podatności kodu na~testowanie~(\textbf{N6}), opisanych szczegółowo w~sekcji~\nameref{sec:wymagania}, wymagała jednoznacznego określenia paradygmatu programistycznego oraz strategii dekompozycji systemu. W~niniejszym rozdziale przedstawiono uzasadnienie wyboru podejścia obiektowego oraz omówiono podział struktury kodu na~pakiety i~moduły, zrealizowany w~zgodzie z~zasadą pojedynczej odpowiedzialności (\emph{single responsibility principle}).
+
 \subsection{Paradygmat programowania obiektowego}
 \label{subsec:oop}
 
-% TODO: uzasadnienie OOP, diagram klas, hierarchia modułów.
+Wstępna, prototypowa implementacja symulatora została wykonana w~konwencji proceduralnej. Całość logiki -- obejmująca definicje parametrów, zmienne stanu obwodu, algorytm sterowania oraz procedury zapisu danych -- została wówczas skupiona wewnątrz jednej funkcji \texttt{simulate()}. Choć rozwiązanie to pozwoliło na~szybką walidację modelu w~relacji 1:1 z~oprogramowaniem PSIM (\nameref{sec:walidacja-fizyki}), generowało ono poważne bariery w~kontekście dalszego rozwoju aplikacji. Silne powiązanie poszczególnych warstw uniemożliwiało izolowane testowanie komponentów, a~wykorzystanie globalnych zmiennych stanu wykluczało bezpieczne, wielokrotne uruchamianie kodu w~pętli optymalizacyjnej algorytmu PSO.
+
+Z~tego względu, po~zakończeniu fazy weryfikacji fizycznej, strukturę kodu zrefaktoryzowano do~postaci obiektowej. Zastosowanie paradygmatu OOP pozwoliło na~osiągnięcie następujących korzyści:
+
+\begin{itemize}
+    \item \textbf{izolacja stanu wewnętrznego} -- poszczególne klasy (takie jak \texttt{Converter} czy \texttt{MFBBController}) samodzielnie zarządzają własnymi polami stanu, co~wyeliminowało konieczność stosowania zmiennych globalnych i~jawnego przekazywania ich w~argumentach funkcji;
+    \item \textbf{wieloinstancyjność środowiska symulacyjnego} -- każda cząstka w~algorytmie roju PSO może operować na~osobnym egzemplarzu klasy \texttt{Simulator} z~własnym zestawem nastaw regulatora, bez ryzyka wzajemnej interferencji danych pomiędzy procesami;
+    \item \textbf{enkapsulacja szczegółów implementacyjnych} -- klasa \texttt{Simulator} udostępnia zewnętrznemu środowisku ujednolicony interfejs w~postaci metody \texttt{run()}, która zwraca gotowy słownik z~przebiegami, w~pełni ukrywając wewnętrzną mechanikę pętli czasowej oraz operacji wejścia/wyjścia;
+    \item \textbf{elastyczna wymiana komponentów} -- modularna struktura pozwala na~bezkolizyjną zamianę klasy \texttt{ButterworthLPF} na~alternatywny algorytm filtracji bez modyfikacji kodu sterownika, co~jest kluczowe dla planowanych badań porównawczych.
+\end{itemize}
+
+Architekturę obiektową dopełniono poprzez wdrożenie niezmiennych obiektów konfiguracyjnych (\emph{frozen dataclasses}). Skupienie wszystkich parametrów numerycznych w~jednym, zablokowanym przed modyfikacją kontenerze gwarantuje pełen determinizm obliczeń oraz realizuje postulat \emph{single source of truth}. Poprawność nowej struktury zweryfikowano za~pomocą automatycznego testu regresji. Porównanie wyników z~wersją proceduralną potwierdziło pełną zgodność bitową ($\max|\Delta|=0$ dla wszystkich $12$ monitorowanych przebiegów), co~dowodzi, że~refaktoryzacja nie wpłynęła na~dokładność numeryczną modelu.
 
 \subsection{Modułowy podział odpowiedzialności}
 \label{subsec:moduly}
 
-% TODO: oddzielenie warstwy fizyki obwodowej od logiki algorytmu sterującego,
-% interfejsy między modułami.
+Kod źródłowy aplikacji został zorganizowany wewnątrz pakietu \texttt{src/}, gdzie każdy z~modułów odpowiada za~wąski, ściśle zdefiniowany fragment funkcjonalności. Strukturę katalogową projektu oraz role przypisane poszczególnym klasom zestawiono w~tabeli~\ref{tab:moduly}.
+
+\begin{table}[ht]
+    \centering
+    \caption{Architektura pakietu \texttt{src/} obiektowej wersji symulatora MF-BB.}
+    \label{tab:moduly}
+    \begin{tabular}{lll}
+        \hline
+        \textbf{Moduł} & \textbf{Klasa / obiekt} & \textbf{Obszar odpowiedzialności} \\
+        \hline
+        \texttt{config.py}     & \texttt{SimulationConfig}  & struktura niezmiennych parametrów eksperymentu \\
+        \texttt{converter.py}  & \texttt{Converter}         & integracja numeryczna (metoda Eulera) obwodu \\
+        \texttt{filters.py}    & \texttt{ButterworthLPF}    & cyfrowa filtracja dolnoprzepustowa~2.~rzędu \\
+        \texttt{sampler.py}    & \texttt{ZOHSampler}        & modelowanie dyskretyzacji i~opóźnienia ZOH \\
+        \texttt{controller.py} & \texttt{MFBBController}    & implementacja algorytmu sterowania MF-BB \\
+        \texttt{simulator.py}  & \texttt{Simulator}         & zarządzanie pętlą czasową i~rejestracja danych \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Relacje i~kierunki zależności pomiędzy modułami zaprojektowano w~sposób całkowicie acykliczny. Warstwa konfiguracji (\texttt{config.py}) stanowi niezależny fundament, z~którego jawnie korzystają klasy odpowiedzialne za~fizykę oraz algorytm sterowania. Z~kolei nadrzędny orkiestrator -- klasa \texttt{Simulator} -- agreguje wszystkie podrzędne komponenty i~udostępnia jedyny punkt wejścia dla skryptów uruchomieniowych warstwy aplikacyjnej. Taka topologia znacząco upraszcza statyczną analizę kodu i~zapobiega powstawaniu cyklicznych zależności pomiędzy modułami.
+
+Kluczowym założeniem przyjętej dekompozycji jest \emph{całkowite odseparowanie modelu fizycznego od~warstwy decyzyjnej sterownika}. Klasa \texttt{Converter} nie posiada wiedzy o~strukturze algorytmu regulacji -- jej metoda \texttt{step(s,\,dt)} przyjmuje jedynie aktualny stan kluczy półprzewodnikowych oraz krok integracji, realizując wyłącznie obliczenia numeryczne opisane w~sekcji~\nameref{sec:silnik}. Analogicznie klasa \texttt{MFBBController} nie modyfikuje bezpośrednio zmiennych stanu przetwornika. Operuje ona wyłącznie na~sygnałach dostarczanych przez obiekt \texttt{ZOHSampler}, który odzwierciedla działanie układu próbkująco-pamiętającego rzeczywistego mikrokontrolera (wprowadzając opóźnienie o~jedną próbkę). Komunikacja ta opiera się na~celowo zdefiniowanym interfejsie pomiarowym, co~wiernie odwzorowuje strukturę fizycznego układu laboratoryjnego.
+
+Wymiana danych wynikowych pomiędzy klasami \texttt{MFBBController} a~\texttt{Simulator} na~potrzeby logowania realizowana jest poprzez dedykowaną strukturę \texttt{ControllerOutput} (typu \emph{dataclass}). Zastąpienie standardowych krotek lub struktur słownikowych jawnym kontraktem typów wyeliminowało błędy powiązane ze~stosowaniem niejawnych identyfikatorów (\emph{magic constants}) i~podniosło czytelność modułów analizujących wyniki symulacji.
 
 \section{Silnik fizyczny}
 \label{sec:silnik}

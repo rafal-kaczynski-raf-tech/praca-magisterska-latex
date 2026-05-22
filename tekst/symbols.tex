@@ -1,10 +1,65 @@
 % Ręcznie tworzona lista symboli - substytut w~przypadku kompilowania za pomocą Overleaf
+% UWAGA: lista uzupelniana sukcesywnie w~miare wprowadzania nowych symboli
+% w~kolejnych rozdzialach pracy. Kolejnosc: parametry obwodu, sygnaly dynamiczne,
+% parametry sterownika, parametry numeryczne, parametry optymalizacji.
 \flushleft
 
-$\pi$
+% --- Parametry elektryczne obwodu (rozdz. 3, sek. 3.2) ---
+\ensuremath{V_{in}}
 \hspace{1cm}
-Stała matematyczna równa stosunkowi obwodu okręgu do jego średnicy
+Napięcie zasilania przekształtnika (strona niskonapięciowa), [V]
 
-\ensuremath{I}
+\vspace{0.3em}
+\ensuremath{L}
 \hspace{1cm}
-Natężenie prądu elektrycznego
+Indukcyjność dławika, [H]
+
+\vspace{0.3em}
+\ensuremath{R_L}
+\hspace{1cm}
+Pasożytnicza rezystancja uzwojenia dławika, [\textOmega]
+
+\vspace{0.3em}
+\ensuremath{C}
+\hspace{1cm}
+Pojemność kondensatora wyjściowego, [F]
+
+\vspace{0.3em}
+\ensuremath{R_{obc}}
+\hspace{1cm}
+Rezystancja zastępcza obciążenia, [\textOmega]
+
+% --- Sygnaly dynamiczne (rozdz. 3, sek. 3.2.3) ---
+\vspace{0.6em}
+\ensuremath{i_L(t)}
+\hspace{1cm}
+Chwilowy prąd płynący przez dławik, [A]
+
+\vspace{0.3em}
+\ensuremath{u_{dc}(t)}
+\hspace{1cm}
+Chwilowe napięcie na kondensatorze wyjściowym, [V]
+
+\vspace{0.3em}
+\ensuremath{u_L(t)}
+\hspace{1cm}
+Chwilowe napięcie na zaciskach dławika, [V]
+
+\vspace{0.3em}
+\ensuremath{i_C(t)}
+\hspace{1cm}
+Chwilowy prąd ładowania kondensatora wyjściowego, [A]
+
+\vspace{0.3em}
+\ensuremath{s(t)}
+\hspace{1cm}
+Binarna zmienna sterująca stanem pary łączników półprzewodnikowych, \ensuremath{s\in\{0,1\}}
+
+% --- Sygnaly sterownika (rozdz. 3, sek. 3.2 -> rozszerzane w sek. nt. MF-BB) ---
+\vspace{0.6em}
+\ensuremath{u_{ref}}
+\hspace{1cm}
+Napięcie zadane na wyjściu przekształtnika, [V]
+
+% TODO: w miare pisania kolejnych sekcji dopisywac tu nowe symbole:
+%   i_des, i_out_est, i_out_filt, w_i, K_v, omega_c, T_s, dt, ...
