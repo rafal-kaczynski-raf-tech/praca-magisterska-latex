@@ -215,19 +215,42 @@ Należy wyraźnie podkreślić, że~w~obrębie metody \texttt{step()} świadomie
 
 Kompletna pętla czasowa symulacji konstruowana jest poprzez wielokrotne wywoływanie metody \texttt{step()} wewnątrz podwójnej iteracji orkiestratora \texttt{Simulator}. Zewnętrzna pętla odmierza cykle mikrokontrolera (krok $T_s=10~\mu\mathrm{s}$), natomiast w~jej wnętrzu realizowanych jest równe $N_{phys}=20$ iteracji fizyki dla ustalonego, zablokowanego sygnału $s$. Taka struktura wiernie odwzorowuje realia pracy sprzętu, gdzie stany sprzętowych rejestrów PWM pozostają niezmienione pomiędzy kolejnymi przerwaniami kontrolera, podtrzymując sygnały bramkowe tranzystorów.
 
-\section{Optymalizacja wydajnościowa}
+\section{Wydajność}
 \label{sec:wydajnosc}
 
-\subsection{Wektoryzacja operacji z~biblioteką NumPy}
+Gwarancja spełnienia kryterium~\textbf{N3} (zdefiniowanego w~rozdziale~\nameref{sec:wymagania}), które narzuca ograniczenie czasu pojedynczej symulacji do~poziomu ułamków lub pojedynczych sekund, ma fundamentalne znaczenie dla efektywności zaimplementowanego algorytmu PSO. W~trakcie strojenia rojem cząstek funkcja celu podlega bowiem setkom, a~nawet tysiącom ewaluacji w~obrębie zaledwie jednej iteracji optymalizatora. Jak udowodniono w~sekcji~\nameref{sec:silnik}, sam rdzeń całkujący obwodu musi zachować postać iteracyjną z~uwagi na~wymóg sekwencyjnego odświeżania stanów na~linii fizyka--sterownik. Z~tego powodu w~niniejszym podrozdziale omówiono techniki akceleracyjne zastosowane poza główną pętlą numeryczną -- w~modułach zarządzania pamięcią, zapisu przebiegów oraz analityki danych. Działania te pozwoliły na~uzyskanie docelowej przepustowości obliczeniowej bez ingerencji w~ścisły aparat matematyczny modelu.
+
+\subsection{Wektoryzacja za~pomocą biblioteki NumPy}
 \label{subsec:numpy}
 
-% TODO: wektoryzacja, struktury danych ndarray, krytyczne znaczenie przy
-% symulacjach wielkoskalowych (np. dla PSO).
+Głównym narzędziem programistycznym, które umożliwiło drastyczną redukcję czasu obliczeń, jest pakiet NumPy~\cite{harris2020numpy} -- rynkowy standard przetwarzania numerycznego w~ekosystemie Pythona. Jego architektura opiera się na~strukturze \texttt{ndarray}, reprezentującej jednorodny, ciągły obszar pamięci dla danych o~ustalonym typie. Dzięki temu operacje matematyczne delegowane są do~wysoce zoptymalizowanych, skompilowanych procedur języka C, całkowicie omijając narzut wydajnościowy interpretera Pythona. W~praktyce przekłada się to na~skrócenie czasu wykonania operacji wektorowych o~jeden do~dwóch rzędów wielkości w~porównaniu do~klasycznych pętli języka nadrzędnego.
 
-\subsection{Profilowanie i~optymalizacja krytycznych ścieżek}
+W~architekturze tworzonego symulatora bibliotekę NumPy zaimplementowano w~trzech kluczowych płaszczyznach:
+
+\begin{itemize}
+    \item \textbf{statyczna prealokacja buforów danych.} Wszystkie tablice gromadzące historię symulacji (zmienne stanu, sygnał sterujący, wewnętrzne rejestry regulatora) rezerwowane są wyłącznie raz, przed uruchomieniem zegara, przy użyciu metody \texttt{np.zeros()} ze~zdefiniowanym z~góry rozmiarem $N_{steps}+1$. Takie podejście całkowicie eliminuje koszty systemowe związane z~dynamicznym powiększaniem struktur podczas iteracji oraz chroni przed nieprzewidywalnymi przerwami wywoływanymi przez odśmiecacz pamięci (\emph{garbage collector});
+    \item \textbf{wektorowa generacja osi czasu.} Kompletna dziedzina czasu $t_0,t_1,\ldots,t_{N_{steps}}$ wyznaczana jest za~pomocą pojedynczego wywołania \texttt{np.arange(N\_steps+1)\,*\,dt}, bez uciekania się do~jawnych pętli. Instrukcja ta jest ewaluowana w~natywnej warstwie biblioteki, w~pełni wykorzystując sprzętowe rozszerzenia wektorowe (SIMD) współczesnych jednostek obliczeniowych;
+    \item \textbf{post-processing i~metryki błędów.} Wszelkie analizy wykonywane po~zamknięciu symulacji -- takie jak wyznaczanie wartości średnich, wyliczanie błędów MAE i~RMSE czy porównywanie zgodności z~modelem referencyjnym PSIM -- oparto wyłącznie na~zwektoryzowanych funkcjach \texttt{np.mean()}, \texttt{np.abs()} oraz \texttt{np.sqrt()}. W~rezultacie, nawet dla wektorów liczących ponad $2\cdot 10^5$ próbek, czas kalkulacji tych wskaźników stanowi pomijalny ułamek w~stosunku do~czasu trwania samego procesu całkowania.
+\end{itemize}
+
+Największą zaletą płynącą z~zastosowania prealokacji jest uzyskanie ciągłego, przewidywalnego dostępu do~pamięci w~trakcie zapisywania wyników każdego kroku w~czasie. Instrukcje przypisania, takie jak \texttt{iL\_arr[k] = self.converter.i\_L}, sprowadzają się do~bezpośredniego zapisu pod zadeklarowany wcześniej adres sprzętowy. Gwarantuje to znakomitą lokalność danych w~szybkiej pamięci podręcznej procesora (L1/L2), co~zbliża rzeczywistą przepustowość operacji do~teoretycznych maksimów magistrali.
+
+\subsection{Profilowanie i~optymalizacja ścieżki krytycznej}
 \label{subsec:profiling}
 
-% TODO: pomiar wydajności, optymalizacje punktowe.
+Lokalizacja tak zwanych wąskich gardeł (\emph{bottlenecks}) była procesem iteracyjnym, opartym na~twardych danych empirycznych zebranych przy użyciu standardowego profilera środowiska Python -- modułu \texttt{cProfile}. Diagnoza początkowego prototypu potwierdziła założenia teoretyczne: przeszło $95~\%$ sumarycznego czasu egzekucji pochłaniała wewnętrzna pętla silnika fizycznego klasy \texttt{Simulator} (konsekwencja wymogu $2\cdot 10^5$ wywołań metody \texttt{step()} dla jednego okna symulacyjnego).
+
+Opierając się na~raportach z~profilowania, zaimplementowano trzy punktowe zabiegi optymalizacyjne, które ostatecznie przypieczętowały spełnienie wymogu~\textbf{N3}:
+
+\begin{itemize}
+    \item \textbf{minimalizacja odniesień atrybutowych (\emph{attribute lookup}).} W~ciele metody \texttt{step()} wprowadzono lokalne referencje do~obiektu z~parametrami (\texttt{p = self.p}). Ten prosty zabieg -- w~żargonie inżynieryjnym znany jako \emph{name binding hoisting} -- eliminuje konieczność ciągłego przeszukiwania przestrzeni nazw obiektu (\texttt{self.p.<atrybut>}) w~kolejnych liniach równań różniczkowych;
+    \item \textbf{kompresja typu danych bufora sterującego.} Wektor $s$, rejestrujący binarne impulsy bramkowe, został zainicjalizowany jako typ \texttt{np.int8} zamiast systemowego \texttt{int64}. Przekłada się to na~ośmiokrotne zmniejszenie obciążenia pamięciowego (z~$1{,}6~\mathrm{MB}$ do~$200~\mathrm{kB}$ dla przebiegu o~długości $0{,}1~\mathrm{s}$), co~znacząco podnosi efektywność buforowania w~pamięci cache;
+    \item \textbf{usunięcie operacji wejścia/wyjścia z~głównej pętli.} Komendy wypisujące logi na~ekran (\texttt{print()}) zostały całkowicie wycięte z~rdzenia całkującego i~przesunięte do~sekcji raportu końcowego. Operacje I/O, z~uwagi na~wymuszone blokady systemowe oraz konwersje formatów znakowych, posiadają narzut czasowy zdolny całkowicie zdominować wydajność nawet najszybszych algorytmów numerycznych.
+\end{itemize}
+
+Po~wdrożeniu powyższych rozwiązań czas potrzebny na~wygenerowanie pełnego przebiegu o~horyzoncie $T_{end}=0{,}1~\mathrm{s}$ ($N_{steps}=2\cdot 10^5$) mieści się w~zakresie pojedynczych sekund na~pojedynczym rdzeniu współczesnego procesora klasy laptopowej. Zapewnia to bezpieczny zapas względem obostrzeń narzuconych przez \textbf{N3}. Osiągnięta wydajność pozwala na~realne planowanie eksperymentów z~rojem PSO -- zakładających setki cząstek i~dziesiątki generacji -- w~rozsądnych ramach czasowych pojedynczych godzin obliczeń, co~w~pełni wpisuje się w~charakter prowadzonych badań.
+
+Należy dodać, że~świadomie zrezygnowano z~agresywniejszych metod akceleracji, w~tym kompilacji \emph{Just-In-Time} (Numba) lub translacji rozszerzeń do~C (\texttt{Cython}). Decyzja ta podyktowana była troską o~czystość architektury kodu i~zapewnienie łatwej portowalności bez angażowania zewnętrznych kompilatorów. Wypracowane czasy wykonania w~pełni zaspokajają bieżące potrzeby, podczas gdy bardziej skomplikowane ramy uruchomieniowe pozostają otwartą furtką dla ewentualnych przyszłych prac nad wielomilionowymi iteracjami lub zrównolegleniem rozproszonym.
 
 \section{Walidacja silnika fizycznego}
 \label{sec:walidacja-fizyki}
