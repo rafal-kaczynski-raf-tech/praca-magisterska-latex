@@ -30,13 +30,65 @@ W~rodzinie metaheurystyk rozważano trzy najpopularniejsze warianty: algorytmy g
 \subsection{Podstawy matematyczne}
 \label{subsec:pso-math}
 
-% TODO: wektory prędkości, pozycje cząstek, równania aktualizacji, znaczenie
-% komponentów kognitywnego i~socjalnego.
+Algorytm PSO został zaproponowany przez Kennedy'ego i~Eberharta w~1995~roku jako matematyczna abstrakcja zachowań społecznych obserwowanych w~stadach ptaków oraz ławicach ryb. Populacja $N$ cząstek przemieszcza się w~$d$-wymiarowej przestrzeni przeszukiwań, przy czym każda cząstka $i\in\{1,\dots,N\}$ jest w~iteracji $k$ jednoznacznie opisana parą wektorów: pozycją $\mathbf{x}_i^{(k)}\in\mathbb{R}^d$ (kandydat na~rozwiązanie) oraz prędkością $\mathbf{v}_i^{(k)}\in\mathbb{R}^d$ (kierunek i~tempo eksploracji).
 
-\subsection{Hiperparametry i~konfiguracja}
+% TODO cytat: Kennedy J., Eberhart R. "Particle Swarm Optimization", Proc. IEEE ICNN 1995.
+
+W~każdej iteracji każda cząstka pamięta dwie najlepsze pozycje: własną historyczną $\mathbf{p}_i$ (\emph{personal best}) oraz najlepszą pozycję odkrytą przez całą populację $\mathbf{g}$ (\emph{global best}). Aktualizacja prędkości i~pozycji odbywa się zgodnie z~kanonicznymi wzorami:
+\begin{equation}
+    \mathbf{v}_i^{(k+1)} = w^{(k)}\,\mathbf{v}_i^{(k)}
+        + c_1\,r_1\odot\bigl(\mathbf{p}_i - \mathbf{x}_i^{(k)}\bigr)
+        + c_2\,r_2\odot\bigl(\mathbf{g} - \mathbf{x}_i^{(k)}\bigr),
+    \label{eq:pso-velocity}
+\end{equation}
+\begin{equation}
+    \mathbf{x}_i^{(k+1)} = \mathbf{x}_i^{(k)} + \mathbf{v}_i^{(k+1)},
+    \label{eq:pso-position}
+\end{equation}
+gdzie $r_1, r_2\sim\mathcal{U}([0,1]^d)$ są wektorami liczb losowych próbkowanymi niezależnie w~każdej iteracji, $\odot$ oznacza iloczyn Hadamarda (po~współrzędnych), $c_1$ jest współczynnikiem uczenia kognitywnego (przyciąganie do~własnego rekordu), $c_2$~--~socjalnego (przyciąganie do~rekordu roju), a~$w^{(k)}$ to~waga bezwładności sterująca przejściem od~globalnej eksploracji do~lokalnej eksploatacji.
+
+Aby uniknąć przedwczesnej zbieżności do~minimum lokalnego, zastosowano liniową dekrementację wagi bezwładności zaproponowaną przez Shi i~Eberharta:
+\begin{equation}
+    w^{(k)} = w_{\max} - \frac{k}{K_{\max}}\,(w_{\max} - w_{\min}),
+    \label{eq:pso-inertia}
+\end{equation}
+gdzie $K_{\max}$ jest~zadaną maksymalną liczbą iteracji. Wysoka wartość $w_{\max}$ na~początku optymalizacji wymusza szerokie przeszukiwanie przestrzeni, natomiast malejąca $w_{\min}$ w~końcowych iteracjach pozwala cząstkom skupić się wokół znalezionego ekstremum.
+
+% TODO cytat: Shi Y., Eberhart R. "A Modified Particle Swarm Optimizer", Proc. IEEE CEC 1998.
+
+Dodatkowo, w~celu zapewnienia stabilności numerycznej algorytmu, każdą składową prędkości ogranicza się symetrycznie wartością $V_{\max,j} = V_{\text{frac}}\,(x_{\max,j}-x_{\min,j})$, gdzie $V_{\text{frac}}\in(0,1)$ jest~globalnym współczynnikiem, a~$[x_{\min,j}, x_{\max,j}]$ są dolną i~górną granicą $j$-tego wymiaru. Pozycje przekraczające granice są przycinane do~hiperkostki dopuszczalnej, co~jest~równoważne zastosowaniu prostej kary barierowej.
+
+% TODO cytat: Clerc M., Kennedy J. "The Particle Swarm -- Explosion, Stability, and Convergence",
+% IEEE Trans. Evol. Comput. 2002 (analiza stabilnosci PSO).
+
+\subsection{Hiperparametry i~konfiguracja roju}
 \label{subsec:pso-config}
 
-% TODO: wagi inercji, współczynniki c1/c2, wielkość roju, warunki stopu.
+W~niniejszej pracy przyjęto klasyczne wartości hiperparametrów PSO, sprawdzone w~literaturze przedmiotu dla zadań optymalizacji ciągłej średniej skali. Pełne zestawienie zawiera tabela~\ref{tab:pso-hparams}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Konfiguracja algorytmu PSO przyjęta w~eksperymentach.}
+    \label{tab:pso-hparams}
+    \begin{tabular}{lcl}
+        \toprule
+        \textbf{Hiperparametr} & \textbf{Wartość} & \textbf{Uzasadnienie} \\
+        \midrule
+        Liczba cząstek $N$           & 20        & kompromis: koszt vs. pokrycie 2D \\
+        Maks. liczba iteracji $K_{\max}$ & 40    & ok.\ 820 ewaluacji łącznie \\
+        Waga bezwładności $w_{\max}$ & 0{,}9     & szeroka eksploracja na~starcie \\
+        Waga bezwładności $w_{\min}$ & 0{,}4     & lokalna eksploatacja na~końcu \\
+        Współczynnik kognitywny $c_1$ & 2{,}05   & kanoniczna wartość Clerca \\
+        Współczynnik socjalny $c_2$  & 2{,}05    & kanoniczna wartość Clerca \\
+        Limit prędkości $V_{\text{frac}}$ & 0{,}5 & 50\% szerokości wymiaru \\
+        Ziarno generatora $\texttt{seed}$ & 42   & powtarzalność wyników \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+W~rozważanym zadaniu wymiar przestrzeni przeszukiwań wynosi $d=2$ (wektor $\mathbf{x}=[w_i,\,f_c]^\top$). Z~uwagi na~kilkurzędowy rozrzut wartości obu parametrów ($w_i\in[0{,}1;\,5]$ oraz $f_c\in[200;\,10\,000]$~Hz), całość optymalizacji prowadzona jest w~skali logarytmicznej -- cząstki operują w~przestrzeni $[\log_{10} x_{\min}, \log_{10} x_{\max}]^2$, a~przed wywołaniem funkcji celu wartości są transformowane potęgowo. Zabieg ten zapewnia równoważne pokrycie obu rzędów wielkości w~każdej z~dziedzin oraz zapobiega numerycznej dominacji jednej współrzędnej nad~drugą w~równaniu~\eqref{eq:pso-velocity}.
+
+Jako warunek stopu przyjęto wyłącznie wyczerpanie maksymalnej liczby iteracji $K_{\max}=40$. Zrezygnowano z~kryterium stagnacji (brak~poprawy $\mathbf{g}$ przez $\Delta k$~iteracji), gdyż~przy~ustalonym małym budżecie ewaluacji nie wnosi ono istotnego skrócenia czasu, a~komplikuje analizę zbieżności prezentowaną w~rozdziale~\ref{sec:wyniki-pso}.
 
 \section{Funkcja kosztu (Fitness Function)}
 \label{sec:fitness}
