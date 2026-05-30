@@ -90,23 +90,55 @@ W~rozważanym zadaniu wymiar przestrzeni przeszukiwań wynosi $d=2$ (wektor $\ma
 
 Jako warunek stopu przyjęto wyłącznie wyczerpanie maksymalnej liczby iteracji $K_{\max}=40$. Zrezygnowano z~kryterium stagnacji (brak~poprawy $\mathbf{g}$ przez $\Delta k$~iteracji), gdyż~przy~ustalonym małym budżecie ewaluacji nie wnosi ono istotnego skrócenia czasu, a~komplikuje analizę zbieżności prezentowaną w~rozdziale~\ref{sec:wyniki-pso}.
 
-\section{Funkcja kosztu (Fitness Function)}
+\section{Funkcja kosztu -- pięciu kandydatów}
 \label{sec:fitness}
 
-\subsection{Penalizacja przeregulowań napięcia}
-\label{subsec:penalty-overshoot}
+Wybór funkcji celu w~automatycznym strojeniu regulatora jest~decyzją inżynierską o~co najmniej~tak~istotnym znaczeniu jak~sam wybór algorytmu optymalizacji. Ten~sam roj cząstek prowadzony tym~samym budżetem ewaluacji dla~różnych funkcji kosztu zwraca jakościowo różne nastawy regulatora -- jedne minimalizujące przeregulowanie kosztem długiego czasu ustalania, inne odwrotnie. W~niniejszej pracy zaimplementowano pięć kandydatów na~funkcję celu, których definicje rekapituluje moduł~\texttt{optymalizacja/cost\_functions.py}, a~porównanie ich~wyników stanowi główną treść~rozdziału~\ref{sec:wyniki-pso}.
 
-% TODO: matematyczna formulacja kary za overshoot napięcia wyjściowego.
+% TODO cytat: Graham D., Lathrop R. "The Synthesis of Optimum Transient Response",
+% AIEE Trans. 1953 (kryteria IAE, ITAE, ISE, ITSE).
 
-\subsection{Penalizacja tętnień prądu}
-\label{subsec:penalty-ripple}
+% TODO cytat: Ogata K. "Modern Control Engineering", 5th ed., Pearson 2010 (rozdzial o kryteriach
+% calkowych jakosci sterowania).
 
-% TODO: matematyczna formulacja kary za tętnienia prądu cewki.
+Wszystkie funkcje przyjmują tę~samą sygnaturę argumentów -- czterokrotkę przebiegów $(t,\,u_{dc},\,i_L,\,s)$ uzyskaną z~jednej kompletnej symulacji oraz tablicę zadanego napięcia~$u_{\mathrm{ref}}(t)$ (skalar lub przebieg dla~scenariusza ze~skokiem zadania). Niech~$e(t) = u_{dc}(t) - u_{\mathrm{ref}}(t)$ oznacza chwilowy uchyb regulacji.
 
-\subsection{Ważenie składników i~normalizacja}
-\label{subsec:fitness-weights}
+\subsection{Kryteria całkowe: MSE, IAE, ITAE}
+\label{subsec:cost-integral}
 
-% TODO: dobór wag, normalizacja składników, dyskusja kompromisów.
+Trzy~pierwsze funkcje należą do~rodziny klasycznych kryteriów całkowych jakości regulacji znanych ze~szkoły Grahama i~Lathropa. Definiuje się je~następująco:
+\begin{equation}
+    \begin{aligned}
+        J_{\mathrm{MSE}}  &= \frac{1}{T}\int_0^{T} e^{2}(\tau)\,\mathrm{d}\tau, \\
+        J_{\mathrm{IAE}}  &= \int_0^{T} \lvert e(\tau)\rvert\,\mathrm{d}\tau, \\
+        J_{\mathrm{ITAE}} &= \int_0^{T} \tau\,\lvert e(\tau)\rvert\,\mathrm{d}\tau,
+    \end{aligned}
+    \label{eq:cost-integral}
+\end{equation}
+gdzie $T$~jest~horyzontem symulacji. Numerycznie całki realizowane są~regułą trapezów (\texttt{numpy.trapezoid}) na~siatce czasowej pochodzącej bezpośrednio z~bliźniaka cyfrowego o~kroku $T_{\mathrm{sw}}/200$. Każde z~trzech kryteriów ma~odmienną charakterystykę: MSE silnie karze pojedyncze duże uchyby (kara kwadratowa~--~uśrednia szczyty), IAE traktuje wszystkie uchyby równomiernie (kara liniowa), zaś ITAE poprzez~ważenie czasem dodatkowo penalizuje uchyby utrzymujące się w~drugiej połowie horyzontu, co~praktycznie eliminuje powolne oscylacje końcowe.
+
+\subsection{Kryterium asymetryczne}
+\label{subsec:cost-asymmetric}
+
+W~przekształtniku boost-buck, w~którym napięcie wyjściowe zasila krytyczne odbiorniki, przeregulowanie powyżej~$u_{\mathrm{ref}}$ jest~zjawiskiem znacznie bardziej szkodliwym niż~uchyb dolny -- może~prowadzić do~przebicia izolacji lub~uszkodzenia kondensatorów elektrolitycznych pracujących blisko swojego napięcia znamionowego. Aby~automatyczne strojenie respektowało tę~niesymetrię fizyczną, wprowadzono kryterium asymetryczne:
+\begin{equation}
+    J_{\mathrm{Asym}} = \int_0^{T} \Bigl[\lambda\,\bigl(\max(e,0)\bigr)^{2}
+        + \bigl(\max(-e,0)\bigr)^{2}\Bigr]\,\mathrm{d}\tau,
+    \label{eq:cost-asymmetric}
+\end{equation}
+gdzie współczynnik~$\lambda = 5$ pięciokrotnie zwiększa wagę dodatniej składowej uchybu względem~ujemnej. Wartość $\lambda$ została dobrana heurystycznie: dla~$\lambda = 1$~kryterium degeneruje się do~ISE, natomiast dla~$\lambda \gg 10$~roj odmawia jakiegokolwiek przeregulowania nawet kosztem znacznego wzrostu czasu ustalania, co~w~praktyce skutkuje wyraźnym \emph{undershoot} po~skoku obciążenia.
+
+\subsection{Kryterium kompozytowe}
+\label{subsec:cost-composite}
+
+Ostatnim z~kandydatów jest~kryterium kompozytowe celujące bezpośrednio w~trzy klasyczne wskaźniki jakości regulacji znane ze~szkoły inżynierskiej -- czas ustalania~$t_s$, przeregulowanie~$M_p$ oraz uchyb ustalony~$e_{ss}$:
+\begin{equation}
+    J_{\mathrm{Comp}} = \alpha\,t_s + \beta\,M_p + \gamma\,e_{ss},
+    \label{eq:cost-composite}
+\end{equation}
+przy~czym $t_s$~podawane jest~w~milisekundach (kryterium 2\,\% okna~ustalania), $M_p$~w~procentach napięcia zadanego, a~$e_{ss}$~w~woltach (średnia z~ostatnich 5\,\% przebiegu). Wagi $\alpha = 100$, $\beta = 10$, $\gamma = 50$ dobrano tak, aby~każdy ze~składników wnosił rząd wartości $\sim$10--100 dla~typowych nastaw regulatora, dzięki~czemu żadna ze~składowych nie~dominuje numerycznie sumy. Wszystkie trzy~wskaźniki wyznaczane są~na~całym horyzoncie symulacji względem~końcowego punktu pracy~$u_{\mathrm{ref}}(T)$ przez~funkcje modułu~\texttt{optymalizacja/metrics.py}.
+
+W~odróżnieniu od~kryteriów całkowych~\eqref{eq:cost-integral} oraz~asymetrycznego~\eqref{eq:cost-asymmetric}, które~operują bezpośrednio na~przebiegu uchybu chwilowego, kryterium kompozytowe wymaga uprzedniej redukcji przebiegu do~trzech skalarnych metryk klasycznych, przez~co~funkcja celu jest~nie tylko niegładka, ale~i~kawałkami stała w~obszarach, w~których małe zmiany nastaw nie~zmieniają próga 2\,\%~okna~ustalania. Z~tego powodu jakość zbieżności PSO dla~$J_{\mathrm{Comp}}$ jest~istotnie gorsza od~kryteriów całkowych, co~zostanie udokumentowane w~rozdziale~\ref{sec:wyniki-pso}.
 
 \section{Integracja PSO z~silnikiem fizycznym}
 \label{sec:pso-integration}
