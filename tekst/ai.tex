@@ -8,9 +8,21 @@
 \section{Wprowadzenie do metaheurystyk w~strojeniu sterowników}
 \label{sec:metaheurystyki}
 
-% TODO: motywacja użycia metod metaheurystycznych zamiast ręcznego strojenia,
-% krótki przegląd alternatyw (algorytmy genetyczne, symulowane wyżarzanie),
-% uzasadnienie wyboru PSO.
+Klasyczne techniki strojenia regulatorów cyfrowych (metoda Zieglera-Nicholsa, lokowanie biegunów, kompensacja częstotliwościowa) zakładają znajomość zlinearyzowanego modelu obiektu sterowania w~okolicy wybranego punktu pracy. Założenie to staje się trudne do utrzymania w~przypadku silnie nieliniowych przekształtników kluczowanych, których dynamika zmienia się topologicznie wraz ze~stanem klucza półprzewodnikowego ($s\in\{0,1\}$), a~dodatkowy stopień złożoności wprowadza obecność członu predykcyjnego oraz cyfrowego filtru dolnoprzepustowego wewnątrz pętli sprzężenia zwrotnego. W~takiej sytuacji racjonalnym podejściem jest sformułowanie problemu jako numerycznej optymalizacji niedyferencjowalnej, w~której funkcja celu jest wartością skalarną wyznaczaną z~kompletnej symulacji bliźniaka cyfrowego dla zadanego wektora hiperparametrów regulatora.
+
+% TODO cytat: monografia metaheurystyk (np. Yang "Nature-Inspired Optimization Algorithms" 2014
+% lub Talbi "Metaheuristics: From Design to Implementation" 2009). Rafal nie ma PDF.
+
+W~rodzinie metaheurystyk rozważano trzy najpopularniejsze warianty: algorytmy genetyczne~(GA), symulowane wyżarzanie~(SA) oraz optymalizację rojem cząstek~(PSO). Spośród nich wybrano algorytm PSO, kierując się następującymi przesłankami:
+\begin{enumerate}
+    \item \textbf{Niska liczba hiperparametrów} -- kanoniczne PSO wymaga doboru jedynie trzech wartości (waga bezwładności $w$, współczynniki uczenia $c_1$, $c_2$), podczas gdy GA wymaga zdefiniowania operatorów selekcji, krzyżowania i~mutacji oraz ich prawdopodobieństw.
+    \item \textbf{Naturalna ciągłość przestrzeni przeszukiwań} -- parametry regulatora MF-BB ($w_i\in\mathbb{R}_{+}$, $f_c\in\mathbb{R}_{+}$) są zmiennymi rzeczywistoliczbowymi, dla których binarna reprezentacja chromosomu w~GA byłaby sztuczna.
+    \item \textbf{Dowiedziona skuteczność w~strojeniu regulatorów energoelektronicznych} -- w~literaturze tematu PSO występuje jako standardowe narzędzie strojenia układów PI/PID dla przekształtników DC-DC.
+    \item \textbf{Trywialna paralelizacja} -- każda z~$N$ cząstek roju jest ewaluowana niezależnie, co~pozwala na~rozproszenie obciążenia obliczeniowego pomiędzy~dostępne rdzenie procesora.
+\end{enumerate}
+
+% TODO cytat: przeglad zastosowan PSO w energoelektronice (np. Kim et al. "PSO-based PID tuning
+% for DC-DC converters" IEEE TIE). Rafal nie ma PDF -- TODO.
 
 \section{Algorytm Optymalizacji Rojem Cząstek (PSO)}
 \label{sec:pso}
