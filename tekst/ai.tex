@@ -199,6 +199,73 @@ Właściwa pętla strojenia jest~realizowana przez~funkcję \texttt{evaluate(log
 
 Z~perspektywy PSO funkcja \texttt{evaluate} jest~deterministyczną odpowiednikiem czarnej skrzynki -- dla~tych samych argumentów zwraca tę~samą wartość (silnik fizyczny nie~używa generatorów liczb pseudolosowych, a~całe źródło stochastyczności sprowadza się do~inicjalizacji roju przez~\texttt{numpy.random.default\_rng(seed=42)}). Dzięki temu pojedyncze uruchomienie eksperymentu jest~w~pełni powtarzalne, co~ma~kluczowe znaczenie dla~odtwarzalności wyników raportowanych w~rozdziale~\ref{sec:wyniki-pso}.
 
+\section{Wyniki strojenia PSO i~porównanie z~baseline'em}
+\label{sec:wyniki-pso}
+
+Algorytm PSO uruchomiono pięciokrotnie -- po~jednym przebiegu na~każdą z~funkcji celu zdefiniowanych w~podrozdziale~\ref{sec:fitness}, przy~tej samej konfiguracji hiperparametrów wymienionych w~tabeli~\ref{tab:pso-hparams} oraz tym samym ziarnie generatora pseudolosowego ($\texttt{seed}=42$). Łączny budżet ewaluacji wyniósł $N\cdot(K_{\max}+1) = 20\cdot 41 = 820$ wywołań silnika fizycznego (kolumna inicjalna~+~$K_{\max}$ iteracji aktualizacji). Wartości optymalnych nastaw $(w_i^*,\,f_c^*)$ wraz z~odpowiadającymi wartościami funkcji celu $J^*$ zestawiono w~tabeli~\ref{tab:pso-wyniki}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Optymalne nastawy regulatora MF-BB znalezione przez~PSO dla~pięciu funkcji celu (scenariusz trudny, $T = 200$~ms).}
+    \label{tab:pso-wyniki}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Funkcja celu} & $w_i^*$ & $f_c^*$ [Hz] & $J^*$ \\
+        \midrule
+        MSE        & 0{,}288 & 9569 & $9{,}55\cdot 10^{1}$ \\
+        IAE        & 0{,}283 & 2701 & $2{,}69\cdot 10^{-1}$ \\
+        ITAE       & 0{,}276 & 9493 & $4{,}71\cdot 10^{-3}$ \\
+        Asymetryczna & 0{,}395 & 6902 & $1{,}91\cdot 10^{1}$ \\
+        Kompozytowa & 0{,}136 & \phantom{0}618 & $1{,}01\cdot 10^{4}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Pierwsze obserwacje strukturalne dotyczą lokalizacji minimów w~przestrzeni nastaw. Cztery kryteria całkowe (MSE, IAE, ITAE, asymetryczne) wskazują podobny zakres wagi inercji $w_i^* \in [0{,}28;\,0{,}40]$, co~odpowiada umiarkowanej dynamice członu predykcyjnego. Wyróżnia się jedynie kryterium kompozytowe, dla~którego $w_i^* = 0{,}136$ jest~bliskie dolnej granicy przestrzeni przeszukiwań -- regulator preferuje wówczas niemal wyłącznie sygnał błędu, kosztem reakcji predykcyjnej, co~jest~bezpośrednią konsekwencją dominacji składnika $\alpha\cdot t_s$ w~funkcji $J_{\mathrm{Comp}}$ (równanie~\eqref{eq:cost-composite}). Częstotliwość filtru $f_c^*$ jest~znacznie bardziej rozproszona -- od~618~Hz (Composite) do~9569~Hz (MSE), co~odzwierciedla różnicę między~kryteriami penalizującymi pojedyncze szczyty (wymagają agresywnej filtracji, $f_c$~wysokie) a~kryteriami uśredniającymi (tolerują niższe pasmo).
+
+Charakter zbieżności roju dla~poszczególnych funkcji celu pokazano na~rysunku~\ref{fig:pso-zbieznosc-porown}. Wszystkie pięć przebiegów osiągnęło stabilne plateau przed~upływem zadeklarowanego budżetu $K_{\max}=40$ iteracji (ITAE: iteracja~34, Composite: 28, pozostałe: 38--40), co~potwierdza wystarczalność przyjętej konfiguracji. Charakterystyczne stopniowe spadki w~początkowych iteracjach odpowiadają pierwszym odkryciom obszarów obiecujących przez~poszczególne cząstki, natomiast późniejsza monotoniczna zbieżność wynika z~liniowej dekrementacji wagi bezwładności (równanie~\eqref{eq:pso-inertia}).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/pso_porownanie_zbieznosci.png}
+    \caption{Krzywe zbieżności PSO dla~pięciu funkcji celu w~funkcji numeru iteracji. Każda krzywa znormalizowana do~swojej wartości początkowej ($J^{(0)}/J^{(0)}=1$); skala logarytmiczna podkreśla ostatnie rzędy poprawy.}
+    \label{fig:pso-zbieznosc-porown}
+\end{figure}
+
+Wizualizację samego procesu przeszukiwania przedstawia rysunek~\ref{fig:pso-roj}, na~którym kolejne pozycje wszystkich cząstek roju zostały naniesione na~mapę funkcji kosztu uzyskaną z~grid searcha. Dla~każdej z~pięciu funkcji celu obserwuje się charakterystyczne kondensowanie się chmury cząstek wokół minimum w~ciągu pierwszych 10--15 iteracji, po~czym następuje faza dokładnej lokalnej eksploracji w~zwartym obszarze.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/pso_roj_na_mapie.png}
+    \caption{Trajektoria roju cząstek PSO nałożona na~mapę funkcji kosztu (grid search 15$\times$15) dla~pięciu funkcji celu. Kolory cząstek odpowiadają numerowi iteracji (gradient od~jasnego do~ciemnego), gwiazda oznacza znalezione $\mathbf{g}^*$.}
+    \label{fig:pso-roj}
+\end{figure}
+
+\subsection{Porównanie ilościowe PSO vs.~grid search}
+\label{subsec:pso-vs-grid}
+
+Bezpośrednie zestawienie wartości funkcji celu osiągniętych przez~PSO i~przez~najlepszy węzeł siatki bazowej (225~symulacji) przedstawia rysunek~\ref{fig:pso-vs-grid}. PSO uzyskuje wartości funkcji celu nie~gorsze od~baseline'u siatkowego dla~wszystkich pięciu kryteriów, przy~czym największą poprawę odnotowano dla~kryterium ITAE: wartość $J^*_{\mathrm{PSO}} = 4{,}71\cdot 10^{-3}$ jest~o~ok.~2{,}5\% niższa od~minimum siatkowego $J^*_{\mathrm{grid}} = 4{,}83\cdot 10^{-3}$. Dla~pozostałych kryteriów różnica jest~marginalna (poniżej~0{,}3\%), co~należy interpretować jako~potwierdzenie, że~siatka 15$\times$15 trafiła blisko prawdziwego optimum, a~PSO dokończył eksplorację w~przestrzeni ciągłej.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.85\linewidth]{rysunki/pso_vs_grid.png}
+    \caption{Porównanie wartości funkcji celu $J^*$ uzyskanej przez~PSO (820~ewaluacji) z~minimum siatki 15$\times$15 (225~ewaluacji) dla~pięciu kryteriów. Wartości znormalizowane do~minimum grid (=1{,}00); PSO poniżej~1 oznacza lepszy wynik.}
+    \label{fig:pso-vs-grid}
+\end{figure}
+
+Z~perspektywy efektywności obliczeniowej PSO osiągnął porównywalne wyniki przy~3,6-krotnie większej liczbie ewaluacji (820 vs.~225). Przewaga metaheurystyki ujawnia się jednak dopiero przy~rozszerzeniu wymiaru przestrzeni przeszukiwań -- dla~regulatora z~$d=4$ hiperparametrami (np.~dodanie współczynników predyktora) siatka tej~samej rozdzielczości wymagałaby $15^4 = 50\,625$ symulacji, podczas gdy PSO zachowuje liniową złożoność $\mathcal{O}(N\cdot K_{\max})$ niezależnie od~$d$.
+
+Jakościowe porównanie wpływu wyboru funkcji celu na~odpowiedź czasową regulatora przedstawia rysunek~\ref{fig:pso-przebiegi}. Widoczne są~istotne różnice charakteru regulacji: kryterium kompozytowe prowadzi do~zauważalnego undershoot po~skoku zadania (skutek dominacji $\alpha\cdot t_s$), kryterium asymetryczne praktycznie eliminuje przeregulowanie kosztem dłuższego czasu ustalania, natomiast kryteria MSE/IAE/ITAE generują odpowiedzi zbliżone jakościowo, z~niewielkim przeregulowaniem rzędu kilku~procent.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/pso_porownanie_przebiegow.png}
+    \caption{Odpowiedzi napięciowe regulatora MF-BB nastrojonego przez~PSO dla~pięciu funkcji celu w~scenariuszu trudnym. Linia przerywana oznacza zadane $u_{\mathrm{ref}}(t)$.}
+    \label{fig:pso-przebiegi}
+\end{figure}
+
+Powyższe porównanie potwierdza, że~dobór funkcji celu jest~istotniejszy dla~ostatecznego charakteru regulacji niż~sam wybór algorytmu metaheurystycznego -- pięć przebiegów PSO o~identycznej konfiguracji algorytmu zwróciło pięć jakościowo różnych nastaw regulatora, każdy optymalny w~sensie swojego kryterium. W~podsumowaniu pracy (rozdział~\ref{ch:podsumowanie}) jako~bazowe rekomendowane jest~kryterium ITAE, zapewniające najlepszy kompromis między~szybkością ustalania a~tłumieniem oscylacji końcowych.
+
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
 
