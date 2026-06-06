@@ -269,6 +269,30 @@ Powyższe porównanie potwierdza, że~dobór funkcji celu jest~istotniejszy dla~
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
 
-% TODO: analiza kosztu obliczeniowego, omówienie ograniczeń jednowątkowego
-% Pythona (GIL), zastosowane metody zrównoleglania (multiprocessing,
-% wektoryzacja).
+Pojedyncza ewaluacja funkcji celu wymaga przeprowadzenia kompletnej symulacji bliźniaka cyfrowego o~kroku fizyki $\Delta t = 0{,}5~\mu$s na~horyzoncie $T = 200$~ms, co~odpowiada $N_{\mathrm{steps}} = T/\Delta t = 4\cdot 10^{5}$ kroków całkowania metodą Eulera. Każdy krok realizuje stałą liczbę operacji zmiennoprzecinkowych (aktualizacja pary $(i_L,\,v_C)$, ewaluacja sterownika co~$T_{s,\mathrm{ctrl}}$, filtr LPF), wskutek czego całkowita złożoność pojedynczej symulacji jest~$\mathcal{O}(N_{\mathrm{steps}})$ ze~stałą rzędu kilkudziesięciu operacji na~krok. W~praktycznych pomiarach na~maszynie z~Apple~M2 jedna~symulacja zajmuje średnio $\bar t_{\mathrm{sim}} \approx 0{,}9$~s w~implementacji wektorowej numpy, co~przekłada się na~budżet czasowy $820 \cdot 0{,}9~\text{s} \approx 12$~minut na~jedno pełne uruchomienie PSO.
+
+Stosując standardową notację metaheurystyczną, łączna złożoność obliczeniowa algorytmu PSO o~$N$ cząstkach, $K_{\max}$ iteracjach i~jednostkowym koszcie ewaluacji $\bar t_{\mathrm{sim}}$ wynosi
+\begin{equation}
+    T_{\mathrm{PSO}} = N\,(K_{\max}+1)\,\bar t_{\mathrm{sim}} + \mathcal{O}(N\,K_{\max}\,d),
+    \label{eq:pso-complexity}
+\end{equation}
+gdzie pierwszy człon dominuje (koszt symulacji), a~drugi (koszt operacji wektorowych na~roju) jest~pomijalnie mały dla~$d = 2$. Dla~grid searcha o~$M$ węzłach na~wymiar złożoność wynosi $T_{\mathrm{grid}} = M^d\,\bar t_{\mathrm{sim}}$, co~ujawnia wykładnicze skalowanie z~wymiarem przestrzeni i~uzasadnia preferencję PSO przy~rozszerzaniu wektora hiperparametrów regulatora.
+
+\subsection{Ograniczenia jednowątkowego CPython}
+
+W~obecnej implementacji zarówno grid search, jak~i~PSO wykonują symulacje sekwencyjnie w~pojedynczym wątku interpretera CPython. Naturalnym krokiem optymalizacyjnym byłaby paralelizacja ewaluacji cząstek w~ramach jednej iteracji, gdyż~każda symulacja jest~całkowicie niezależna od~pozostałych. Realizacja tego~kroku napotyka jednak fundamentalne ograniczenie języka Python -- mechanizm \emph{Global Interpreter Lock} (GIL) uniemożliwia jednoczesne wykonywanie kodu bajtowego Pythona przez~wiele wątków systemowych w~jednym procesie interpretera, co~skutecznie sprowadza wielowątkowość (\texttt{threading}) do~roli mechanizmu konkurencyjności, a~nie~prawdziwej równoległości obliczeń.
+
+% TODO cytat: dokumentacja CPython "What's New in Python 3.13" (PEP 703 -- opcjonalne usuniecie GIL)
+% lub D. Beazley "Understanding the Python GIL", PyCon 2010.
+
+Standardowym obejściem GIL w~zastosowaniach obliczeniowych jest~moduł \texttt{multiprocessing}, który~tworzy odrębne procesy systemowe (każdy z~własnym interpreterem i~własnym GIL-em), komunikujące się przez~rurki~IPC. Dla~rozważanego scenariusza pula \texttt{multiprocessing.Pool(processes=$P$)} pozwoliłaby ewaluować $P$~cząstek jednocześnie, redukując czas pojedynczej iteracji PSO z~$N\cdot\bar t_{\mathrm{sim}}$ do~$\lceil N/P\rceil\cdot\bar t_{\mathrm{sim}}$. Dla~$N=20$ cząstek i~$P=8$~rdzeni teoretyczne przyspieszenie wynosiłoby $\sim$2{,}5$\times$, redukując budżet czasowy całego uruchomienia z~12 do~$\sim$5~minut. Implementację tego~rozszerzenia pozostawiono jako~kierunek dalszych prac -- dla~obecnej skali eksperymentów (pięć uruchomień PSO w~ramach pracy magisterskiej) bezwzględny czas obliczeń nie~stanowi przeszkody, a~zachowanie pojedynczego wątku ułatwia debugowanie i~zapewnia deterministyczną kolejność ewaluacji.
+
+\subsection{Uzasadnienie autorskiej implementacji PSO}
+
+Decyzja o~napisaniu PSO od~podstaw (moduł \texttt{optymalizacja/pso.py}, $\sim$200 linii kodu), zamiast~wykorzystania gotowych bibliotek pokroju \texttt{pyswarms}~lub~\texttt{deap}, była~podyktowana trzema względami:
+\begin{enumerate}
+    \item \textbf{Pełna kontrola nad~przestrzenią log/lin} -- automatyczne potęgowanie współrzędnych w~funkcji \texttt{evaluate} oraz zapis historii w~przestrzeni logarytmicznej (do~wizualizacji map kosztu) wymagałyby w~bibliotekach zewnętrznych dopisania nietrywialnych transformatorów.
+    \item \textbf{Brak zewnętrznych zależności} -- moduł \texttt{optymalizacja/} bazuje wyłącznie na~\texttt{numpy}, co~zachowuje filozofię całego projektu (minimalna powierzchnia zależności, łatwa odtwarzalność na~dowolnej stacji roboczej z~interpreterem $\ge$3{,}10).
+    \item \textbf{Wartość dydaktyczna} -- jako~praca magisterska, projekt ma~oprócz~wymiaru inżynierskiego również walor edukacyjny, a~implementacja klasycznego algorytmu PSO od~podstaw umożliwia świadomą kontrolę każdego z~jego elementów (inicjalizacja, ograniczenia prędkości, dekrementacja inercji), zamiast~traktowania optymalizatora jako~czarnej skrzynki.
+\end{enumerate}
+Wybór ten, oprócz~przezroczystości implementacyjnej, ułatwił również późniejsze rozszerzenie kodu o~równoległą ewaluację wszystkich pięciu funkcji celu w~ramach jednej pętli grid searcha (zmienna \texttt{results: dict} w~module \texttt{grid\_search.py}), co~ograniczyło łączny czas wygenerowania map kosztu z~potencjalnych $5\cdot 225 = 1125$ symulacji do~rzeczywistych 225.
