@@ -143,8 +143,61 @@ W~odróżnieniu od~kryteriów całkowych~\eqref{eq:cost-integral} oraz~asymetryc
 \section{Integracja PSO z~silnikiem fizycznym}
 \label{sec:pso-integration}
 
-% TODO: pętla optymalizacji — PSO uruchamia symulację dla każdej cząstki,
-% interfejs między modułem AI a~silnikiem.
+Zaletą oddzielenia silnika fizycznego (rozdział~\ref{ch:realizacja}) od~warstwy strojenia jest~możliwość wpięcia algorytmu PSO bez~jakichkolwiek modyfikacji rdzenia symulacyjnego. Cały moduł optymalizacyjny (\texttt{optymalizacja/}) traktuje silnik jako funkcję typu \emph{black-box}, której pojedyncze wywołanie odpowiada jednej~ewaluacji funkcji celu dla~ustalonej pary $(w_i, f_c)$. Pętla optymalizacji składa się z~trzech logicznie wyodrębnionych komponentów: definicji scenariusza testowego, opcjonalnego baseline'u opartego o~grid search oraz właściwej pętli ewaluacji wywoływanej z~wnętrza PSO.
+
+\subsection{Scenariusz testowy}
+\label{subsec:pso-scenario}
+
+Jakość strojenia regulatora ujawnia się dopiero w~obecności zaburzeń wymuszających aktywne przełączanie klucza półprzewodnikowego. Z~tego powodu wszystkie eksperymenty optymalizacyjne wykonano w~tzw.~\emph{scenariuszu trudnym} (\texttt{optymalizacja/scenarios.py}\,/\,\texttt{hard\_scenario}), w~którym horyzont $T = 200$~ms został podzielony na~cztery 50-milisekundowe odcinki:
+\begin{enumerate}
+    \item $t\in[0,\,50)$~ms -- rozruch z~$u_{dc}(0)=100$~V do~$u_{\mathrm{ref}}=240$~V przy~obciążeniu $R = 47{,}6~\Omega$;
+    \item $t = 50$~ms -- skokowe \emph{odciążenie} $R \leftarrow 95{,}238~\Omega$ (obciążenie redukowane do~połowy mocy), wymuszające szybkie zdławienie nadwyżki energii w~kondensatorze przez~regulator ($s = 0$);
+    \item $t\in(50,\,100)$~ms -- stan ustalony przy~zmniejszonym obciążeniu;
+    \item $t = 100$~ms -- skok zadania $u_{\mathrm{ref}} \leftarrow 260$~V, wymagający aktywnego pchnięcia prądu cewki z~zachowaniem ograniczenia $i_L < i_{\max} = 20$~A.
+\end{enumerate}
+Powyższa konfiguracja została dobrana eksperymentalnie po~odrzuceniu wcześniejszego wariantu z~\emph{dociążeniem} ($R/2$) i~skokiem zadania w~dół, w~którym nastawy regulatora okazały się nie~mieć wpływu na~przebieg -- dociążenie aktywowało zabezpieczenie nadprądowe (OCP), a~skok w~dół powodował pasywne rozładowanie kondensatora przez~odbiornik. W~obecnym wariancie obie operacje (odciążenie + ref-step w~górę) wymagają jawnego sterowania kluczem, co~różnicuje funkcję kosztu względem nastaw $(w_i, f_c)$. Reprezentatywne przebiegi scenariusza dla~jednego punktu pracy zilustrowano na~rysunku~\ref{fig:scenario-check}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\linewidth]{rysunki/scenario_check.png}
+    \caption{Weryfikacja scenariusza trudnego: przebieg napięcia $u_{dc}(t)$ i~prądu cewki $i_L(t)$ dla~ustalonej pary nastaw regulatora. Widoczne dwa zdarzenia: skokowe odciążenie w~$t = 50$~ms oraz skok zadania $240 \to 260$~V w~$t = 100$~ms.}
+    \label{fig:scenario-check}
+\end{figure}
+
+\subsection{Baseline siatkowy (grid search 15$\times$15)}
+\label{subsec:pso-grid}
+
+Przed~uruchomieniem właściwej optymalizacji rojem cząstek przeprowadzono pełną ewaluację siatkową w~przestrzeni $(w_i, f_c)$ na~kracie $15\times 15 = 225$~węzłów, rozmieszczonych równomiernie w~skali logarytmicznej (\texttt{optymalizacja/grid\_search.py}). Granice siatki przyjęto analogicznie do~granic przestrzeni PSO ($w_i\in[0{,}1;\,5]$, $f_c\in[200;\,10\,000]$~Hz). Dla~każdego z~225 węzłów wykonano kompletną symulację scenariusza trudnego oraz~obliczono wszystkie pięć funkcji celu zdefiniowanych w~podrozdziale~\ref{sec:fitness}, otrzymując w~rezultacie pięć dwuwymiarowych map kosztu zobrazowanych na~rysunku~\ref{fig:mapy-kosztow}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/mapy_kosztow.png}
+    \caption{Mapy funkcji kosztu w~przestrzeni $(w_i, f_c)$ uzyskane z~grid searcha $15\times 15$ węzłów. Każda mapa odpowiada jednej z~pięciu funkcji celu (MSE, IAE, ITAE, asymetryczna, kompozytowa). Skala logarytmiczna na~obu osiach, krzyżyk oznacza minimum globalne~siatki.}
+    \label{fig:mapy-kosztow}
+\end{figure}
+
+Baseline siatkowy pełni dwie funkcje. Po~pierwsze, dostarcza punktu odniesienia (\emph{ground truth} w~granicach rozdzielczości kraty) względem~którego można ocenić skuteczność PSO -- algorytm metaheurystyczny powinien znaleźć rozwiązanie nie~gorsze od~najlepszego węzła siatki, zazwyczaj jednak lepsze, gdyż~działa w~przestrzeni ciągłej. Po~drugie, mapy kosztu ujawniają jakościowy charakter krajobrazu optymalizacyjnego -- obecność wielu minimów lokalnych, długich dolin oraz~obszarów płaskich, co~bezpośrednio uzasadnia konieczność użycia metody globalnej zamiast~klasycznych gradientowych. Przebiegi czasowe odpowiadające nastawom optymalnym dla~każdej z~pięciu funkcji celu zestawiono na~rysunku~\ref{fig:przebiegi-optimum}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/przebiegi_optimum.png}
+    \caption{Przebiegi napięcia $u_{dc}(t)$ uzyskane dla~nastaw $(w_i^*,f_c^*)$ minimalizujących każdą z~pięciu funkcji celu na~siatce $15\times 15$. Widoczne jakościowe różnice odpowiedzi -- kryteria całkowe (MSE/IAE/ITAE) faworyzują szybką, agresywną dynamikę, natomiast kryterium asymetryczne i~kompozytowe prowadzą do~odpowiedzi bardziej zachowawczych.}
+    \label{fig:przebiegi-optimum}
+\end{figure}
+
+\subsection{Pętla ewaluacji w~PSO}
+\label{subsec:pso-loop}
+
+Właściwa pętla strojenia jest~realizowana przez~funkcję \texttt{evaluate(log\_wi, log\_fc, cost\_name)} z~modułu \texttt{optymalizacja/pso.py}, której kolejne wywołania PSO wykonuje wewnątrz pętli głównej dla~każdej cząstki w~każdej iteracji. Algorytmiczne kroki pojedynczej ewaluacji są~następujące:
+\begin{enumerate}
+    \item potęgowanie współrzędnych cząstki: $w_i \leftarrow 10^{\log w_i}$, $f_c \leftarrow 10^{\log f_c}$ (przejście z~przestrzeni PSO do~przestrzeni fizycznej);
+    \item podmiana nastaw regulatora w~kopii konfiguracji domyślnej (\texttt{default\_config()}) z~jednoczesnym podpięciem scenariusza trudnego i~horyzontu $T = 200$~ms;
+    \item wywołanie metody \texttt{Simulator(cfg).run()} -- pełna symulacja $\sim$$4\cdot 10^{5}$ kroków;
+    \item zbudowanie tablicy zadania $u_{\mathrm{ref}}(t)$ uwzględniającej ref-step;
+    \item wywołanie funkcji kosztu wybranej z~rejestru \texttt{COST\_FUNCTIONS} i~zwrócenie wartości skalarnej.
+\end{enumerate}
+
+Z~perspektywy PSO funkcja \texttt{evaluate} jest~deterministyczną odpowiednikiem czarnej skrzynki -- dla~tych samych argumentów zwraca tę~samą wartość (silnik fizyczny nie~używa generatorów liczb pseudolosowych, a~całe źródło stochastyczności sprowadza się do~inicjalizacji roju przez~\texttt{numpy.random.default\_rng(seed=42)}). Dzięki temu pojedyncze uruchomienie eksperymentu jest~w~pełni powtarzalne, co~ma~kluczowe znaczenie dla~odtwarzalności wyników raportowanych w~rozdziale~\ref{sec:wyniki-pso}.
 
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
