@@ -24,9 +24,17 @@ Dodatkowym wyzwaniem jest~wymagana \emph{szybkość odpowiedzi dynamicznej} prze
 \section{Dynamika fazy nieminimalnej}
 \label{sec:nmp}
 
-% TODO: zjawisko NMP — odwrotna reakcja napięciowa w~stanach przejściowych
-% układów podwyższających; matematyczna charakterystyka, konsekwencje dla
-% projektowania regulatora.
+Zjawisko fazy nieminimalnej (ang.~\emph{non-minimum phase}, NMP) jest~fundamentalną cechą dynamiki przekształtników podwyższających napięcie, której prawidłowe zrozumienie warunkuje racjonalny dobór strategii sterowania. W~kategoriach teorii układów regulacji, system jest~układem NMP, jeżeli jego~funkcja transmitancji posiada co~najmniej jedno~zero w~prawej półpłaszczyźnie zmiennej zespolonej~$s$ (ang.~\emph{Right-Half-Plane zero}, RHP-zero). Z~punktu widzenia odpowiedzi czasowej, obecność takiego zera manifestuje się tzw.~\emph{początkową odwrotną reakcją} -- po~skokowym pobudzeniu sygnału sterującego napięcie wyjściowe na~krótkim odcinku czasu zmienia się \emph{przeciwnie} do~ostatecznego ustalonego kierunku, dopiero po~upływie tego~okresu kierując się do~wartości docelowej~\cite{tatari2024mfbb}.
+
+Bezpośrednią fizyczną przyczyną występowania zera RHP w~topologii \emph{boost} jest~specyficzny mechanizm dwustopniowego transferu energii. W~momencie zwiększenia wartości współczynnika wypełnienia~$D$ klucz dolny przewodzi przez~większą część okresu przełączania, co~powoduje natychmiastowe \emph{odłączenie} cewki od~kondensatora wyjściowego. W~tym przedziale czasu odbiornik podłączony do~wyjścia jest~zasilany wyłącznie z~rozładowywania kondensatora, wskutek czego napięcie wyjściowe \emph{maleje} -- mimo~że~docelowym efektem zwiększenia~$D$ jest~jego wzrost. Dopiero po~kilku okresach przełączania, kiedy zwiększony średni prąd cewki nadrobi straty energetyczne kondensatora, napięcie wyjściowe zaczyna rosnąć i~zmierza do~nowej wartości ustalonej~\cite{erickson2020}.
+
+Z~punktu widzenia projektanta układu sterowania, dynamika NMP stwarza fundamentalne ograniczenie pasma regulatora liniowego. Klasyczna teoria układów regulacji pokazuje bowiem, że~pasmo przepustowości pętli zamkniętej dla~układu z~zerem RHP w~częstotliwości~$\omega_{\mathrm{RHP}}$ jest~ograniczone od~góry wartością $\omega_{\mathrm{BW}} \lesssim \omega_{\mathrm{RHP}}/2$~\cite{erickson2020}. Próby wymuszenia szybszej odpowiedzi prowadzą nieuchronnie do~utraty stabilności pętli zamkniętej, niezależnie od~sofistykacji algorytmu strojenia regulatora. W~praktycznych zastosowaniach mikrosieciowych, w~których wymagana jest~szybka reakcja na~zaburzenia obciążenia, ograniczenie to~staje się głównym czynnikiem limitującym jakość regulacji klasycznymi metodami liniowymi.
+
+% TODO cytat: monograficzne ujecie ograniczen NMP w teorii regulacji (np. Skogestad,
+% Postlethwaite "Multivariable Feedback Control: Analysis and Design", 2nd ed., 2005,
+% rozdz. 5.7 -- "Limitations imposed by RHP-zeros"). Rafal nie ma PDF -- TODO.
+
+Powyższe ograniczenie stanowi pierwotną motywację dla~poszukiwania nieliniowych strategii sterowania, które~potrafiłyby ominąć ograniczenie wprowadzane przez~zero RHP. W~rozwiązaniach predykcyjnych (FS-MPC) ominięcie to~odbywa się poprzez~bezpośrednie modelowanie odpowiedzi nieliniowej w~ramach skończonego horyzontu predykcji~\cite{tatari2025splitcost}, natomiast w~bezmodelowych strategiach Bang-Bang (MF-BB) -- przez~bezpośrednią obserwację kierunku zmian sygnałów wyjściowych bez~próby formalnego modelowania pełnej dynamiki przekształtnika~\cite{tatari2024mfbb}. Obie te~strategie omawiane są~szczegółowo w~dalszej części niniejszego rozdziału.
 
 \section{Klasyczne metody regulacji}
 \label{sec:klasyczne}
