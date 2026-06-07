@@ -8,8 +8,18 @@
 \section{Dwukierunkowe przetwornice DC-DC w~mikrosieciach}
 \label{sec:przetwornice}
 
-% TODO: rola przetwornic Buck-Boost w~mikrosieciach DC, przegląd topologii,
-% zastosowania (OZE, magazyny energii, EV).
+Współczesna transformacja sektora energetycznego, napędzana zarówno wymaganiami klimatycznymi, jak~i~ekonomiką rozproszonego wytwarzania, doprowadziła do~upowszechnienia tzw.~\emph{mikrosieci prądu stałego} (ang.~\emph{DC microgrids}) jako struktur pośredniczących między~źródłami odnawialnymi (panele fotowoltaiczne, ogniwa paliwowe), magazynami energii (akumulatory, superkondensatory) oraz odbiornikami końcowymi. W~strukturach tych kluczową rolę funkcjonalną pełnią przekształtniki DC-DC, zapewniające dopasowanie poziomów napięcia, sterowanie przepływem mocy oraz separację galwaniczną poszczególnych segmentów sieci.
+
+% TODO cytat: przegladowa monografia mikrosieci DC (np. Kakigano, Miura, Ise
+% "Low-Voltage Bipolar-Type DC Microgrid for Super High Quality Distribution",
+% IEEE Trans. Power Electron., 2010 lub Dragicevic et al. "DC Microgrids -- Part I/II",
+% IEEE Trans. Power Electron., 2016). Rafal nie ma PDF -- TODO.
+
+Spośród szerokiej rodziny topologii konwersji DC-DC szczególne znaczenie w~zastosowaniach mikrosieciowych zyskała \emph{synchroniczna topologia podwyższająco-obniżająca} (ang.~\emph{synchronous Buck-Boost}), w~której klasyczne pasywne elementy prostownicze (diody) zastąpiono w~pełni sterowanymi kluczami półprzewodnikowymi. Dzięki temu zabiegowi przekształtnik uzyskuje zdolność do~\emph{dwukierunkowego} przepływu energii -- może~zarówno podwyższać napięcie ze~źródła do~szyny mikrosieci (tryb \emph{boost}, np.~ładowanie szyny z~ogniwa fotowoltaicznego), jak~i~odwracać kierunek przepływu (tryb \emph{buck}, np.~ładowanie magazynu energii ze~szyny mikrosieci). Zasada działania, równania stanu oraz analizę topologiczną dla~obu trybów pracy przedstawia klasyczna monografia~Ericksona i~Maksimovicia~\cite{erickson2020}.
+
+Z~punktu widzenia projektanta układu sterowania, kluczową cechą topologii dwukierunkowej jest~istnienie dwóch~jakościowo różnych reżimów pracy: \emph{trybu ciągłego prądu cewki} (CCM, $i_L>0$ przez~cały okres przełączania) oraz \emph{trybu nieciągłego} (DCM, $i_L = 0$ na~części okresu). W~zastosowaniach mikrosieciowych zwykle dąży się do~pracy w~trybie CCM, gdyż~tylko on~zapewnia liniową zależność napięcia wyjściowego od~współczynnika wypełnienia~$D$ klucza i~przewidywalną dynamikę. Wymóg ten~stawia jednak istotne ograniczenia od~strony doboru indukcyjności cewki~$L$ oraz częstotliwości przełączania~$f_{\mathrm{sw}}$, omawiane szczegółowo w~rozdziale~\ref{ch:realizacja}.
+
+Dodatkowym wyzwaniem jest~wymagana \emph{szybkość odpowiedzi dynamicznej} przekształtnika -- typowe mikrosieci podlegają częstym zaburzeniom obciążenia (włączanie/wyłączanie odbiorników) oraz okresowym zmianom mocy źródeł (chmury nad~panelem fotowoltaicznym, zmiany prędkości turbiny wiatrowej). Klasyczne strategie sterowania oparte na~liniowych regulatorach PI w~ścieżce napięciowej i~prądowej, omówione w~rozdziale~\ref{sec:klasyczne}, sprawdzają się dla~małych wahań wokół ustalonego punktu pracy, lecz~tracą skuteczność w~warunkach głębokich zmian dynamicznych -- co~motywuje sięgnięcie po~metody zaawansowane (FS-MPC, MF-BB) omawiane w~dalszej części niniejszego rozdziału.
 
 \section{Dynamika fazy nieminimalnej}
 \label{sec:nmp}
