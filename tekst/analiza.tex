@@ -68,8 +68,33 @@ Powyższe ograniczenia motywują poszukiwanie strategii sterowania o~odmiennych 
 \section{Predykcyjna kontrola zbioru skończonego}
 \label{sec:fsmpc}
 
-% TODO: FS-MPC — koncepcja, przegląd na podstawie literatury Tatari, Bizhani,
-% Iwański (split-cost, motion blocking). Wydajność vs koszt obliczeniowy.
+Sterowanie predykcyjne ze~zbiorem skończonym sygnałów sterujących (ang.~\emph{Finite-Set Model Predictive Control}, FS-MPC) stanowi jedną z~najbardziej intensywnie rozwijanych klas algorytmów regulacji w~energoelektronice ostatniej dekady. Filozofia tej~rodziny metod zasadniczo różni się od~podejścia regulatorów liniowych: zamiast~generować ciągły sygnał sterujący wymagający dalszej modulacji (PWM), algorytm FS-MPC wprost wybiera optymalny wektor stanu kluczy półprzewodnikowych spośród skończonego zbioru fizycznie dopuszczalnych kombinacji~\cite{tatari2025splitcost}.
+
+Algorytmiczny rdzeń FS-MPC w~każdym kroku próbkowania $T_{s,\mathrm{ctrl}}$ realizuje trzy~zasadnicze operacje:
+\begin{enumerate}
+    \item \textbf{Predykcję} -- dla~każdej z~$N_s$ dopuszczalnych konfiguracji kluczy~$s_k \in \mathcal{S}$ wyznaczany jest~przewidywany stan przekształtnika $(i_L^{(k)}, u_{dc}^{(k)})$ na~końcu horyzontu predykcji~$N_p$, wykorzystując dyskretyzowany model dynamiki obiektu.
+    \item \textbf{Ewaluację funkcji kosztu} -- każdej predykcji przypisywana jest~wartość skalarnej funkcji jakości~$J^{(k)}$, kwantyfikująca odchyłkę od~zadanej trajektorii oraz~ewentualne dodatkowe kryteria (limit prądu, częstotliwość przełączania, zrównoważenie obciążenia kluczy).
+    \item \textbf{Selekcję} -- na~aktywnej wyjściowej kombinacji kluczy umieszczany jest~ten~wektor~$s_k^{*}$, który~zminimalizował funkcję kosztu.
+\end{enumerate}
+
+Naturalną zaletą FS-MPC w~kontekście dynamiki NMP omawianej w~podrozdziale~\ref{sec:nmp} jest~zdolność do~jawnego uwzględnienia początkowej odwrotnej reakcji napięciowej w~ramach modelu predykcyjnego -- algorytm „wie", że~natychmiastowy skutek wybranej kombinacji kluczy może być chwilowo niepożądany, lecz~prowadzi do~lepszej trajektorii długoterminowej. Cecha ta~umożliwia w~praktyce uzyskanie pasm regulacji znacząco przekraczających klasyczną granicę $\omega_{\mathrm{BW}} \lesssim \omega_{\mathrm{RHP}}/2$ obowiązującą dla~regulatorów liniowych. Dodatkowo, ze~względu na~jawne~działanie na~poziomie kombinacji kluczy (bez~pośrednictwa PWM), FS-MPC z~natury rzeczy poprawnie obsługuje topologie wielopoziomowe i~modułowe (MMC, NPC, CHB).
+
+\subsection*{Rozwinięcia FS-MPC: split-cost i~motion blocking}
+
+Jedną z~istotnych słabości klasycznej formulacji FS-MPC jest~problem doboru wag w~złożonej funkcji kosztu obejmującej wiele konkurujących kryteriów (kontrola napięcia, kontrola prądu, ograniczenie częstotliwości przełączeń, balansowanie kluczy). Pojedyncza skalarna suma ważona prowadzi do~konfliktu skali poszczególnych składowych oraz~trudności analitycznych w~uzasadnieniu wybranych wag. W~odpowiedzi na~ten~problem~Tatari i~Iwański zaproponowali strategię tzw.~\emph{podzielonej funkcji kosztu} (\emph{split-cost}), w~której pojedyncza monolityczna funkcja jakości zastępowana jest~hierarchiczną dekompozycją niezależnie ocenianych kryteriów, ewaluowanych w~ustalonej kolejności priorytetowej~\cite{tatari2025splitcost}. Dzięki temu zabiegowi unika się arbitralnego strojenia wag, a~jednocześnie zachowuje się formalną gwarancję spełnienia twardych ograniczeń bezpieczeństwa układu (np.~limitu prądu maksymalnego $i_L < i_{\max}$).
+
+Drugim istotnym rozszerzeniem rozwiniętym w~tym~samym nurcie literatury jest~tzw.~\emph{blokowanie ruchu} (\emph{motion blocking}), które~ogranicza liczbę zmian kombinacji kluczy w~ramach jednego horyzontu predykcji. Zabieg ten~drastycznie redukuje liczbę kombinacji do~ewaluowania (z~$N_s^{N_p}$ do~efektywnie kilku scenariuszy), umożliwiając wydłużenie horyzontu predykcji bez~katastrofalnego wzrostu kosztu obliczeniowego~\cite{tatari2025splitcost}.
+
+\subsection*{Praktyczne ograniczenia FS-MPC}
+
+Mimo wymienionych zalet, sterowanie predykcyjne pozostaje obarczone fundamentalnymi ograniczeniami praktycznymi, które~motywują poszukiwanie alternatyw:
+\begin{enumerate}
+    \item \textbf{Wysoki koszt obliczeniowy} -- każdy krok próbkowania wymaga $N_s^{N_p}$ ewaluacji modelu obiektu (bez~motion~blocking) oraz~tyleż wartościowań funkcji kosztu. Dla~typowych topologii dwupoziomowych ($N_s = 4$) i~horyzontu predykcji $N_p = 2$~--~3, oznacza to~kilkanaście--kilkadziesiąt operacji predykcyjnych w~każdym cyklu $T_{s,\mathrm{ctrl}}$~\cite{tatari2025splitcost}.
+    \item \textbf{Wrażliwość na~jakość modelu} -- predykcje wykorzystywane przez~algorytm bazują na~zdyskretyzowanym modelu liniowym obiektu w~okolicy aktualnego stanu. Rozbieżności między~modelem a~rzeczywistym układem (zmienne parametry pasywne, straty, opóźnienia obliczeniowe) prowadzą do~systematycznych błędów predykcji, które~kumulują się wraz z~wydłużeniem horyzontu.
+    \item \textbf{Zmienna częstotliwość przełączeń} -- w~odróżnieniu od~regulatorów z~modulatorem PWM, FS-MPC z~natury rzeczy generuje sygnał sterujący o~zmiennym widmie częstotliwościowym, co~utrudnia projektowanie filtrów EMI i~zwiększa wymagania konstrukcyjne dla~elementów pasywnych.
+\end{enumerate}
+
+Powyższe ograniczenia, w~szczególności wymagania obliczeniowe i~wrażliwość na~dokładność modelu, stanowią bezpośrednią motywację dla~następnej rodziny metod -- bezmodelowych strategii Bang-Bang, omawianych w~podrozdziale~\ref{sec:bb}.
 
 \section{Strategie sterowania Bang-Bang}
 \label{sec:bb}
