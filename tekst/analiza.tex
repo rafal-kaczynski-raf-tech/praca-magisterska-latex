@@ -39,11 +39,31 @@ Powyższe ograniczenie stanowi pierwotną motywację dla~poszukiwania nieliniowy
 \section{Klasyczne metody regulacji}
 \label{sec:klasyczne}
 
+Pomimo opisanych w~podrozdziale~\ref{sec:nmp} ograniczeń, klasyczne regulatory liniowe (PI, PID) pozostają najszerzej stosowanym rozwiązaniem przemysłowym w~sterowaniu przekształtnikami DC-DC, głównie z~uwagi na~ich~prostotę implementacyjną, dojrzałość teoretyczną oraz~niewielkie wymagania obliczeniowe nakładane na~jednostkę mikrokontrolera. W~niniejszym podrozdziale dokonano krytycznego przeglądu tej~rodziny metod, identyfikując ich~praktyczne ograniczenia w~kontekście stawianym przez~mikrosieci~DC.
+
 \subsection{Regulatory PI}
 \label{subsec:pi}
 
-% TODO: ograniczenia regulatorów PI w~warunkach nieliniowych, problem doboru
-% nastaw, brak adaptacji do zmiennych warunków pracy.
+Strukturalnie najpopularniejsze podejście do~regulacji przekształtników podwyższających opiera się na~tzw.~\emph{kaskadowej pętli PI}: zewnętrzny regulator napięciowy generuje wartość zadaną prądu cewki~$i_L^{*}$, a~wewnętrzny regulator prądowy przekształca tę~wartość w~sygnał współczynnika wypełnienia~$D$ modulatora PWM. Wzór regulatora PI w~postaci ciągłej ma~standardową formę
+\begin{equation}
+    u(t) = K_p\,e(t) + K_i\int_0^{t} e(\tau)\,\mathrm{d}\tau,
+    \label{eq:pi-cont}
+\end{equation}
+gdzie $e(t)$~jest~uchybem regulacji, a~$K_p$, $K_i$~są~wzmocnieniami członu proporcjonalnego i~całkującego. W~praktyce cyfrowej implementacji równanie to~jest~dyskretyzowane (najczęściej metodą trapezów lub~Eulera w~tył), a~jego wykonanie odbywa się synchronicznie z~okresem próbkowania regulatora~$T_{s,\mathrm{ctrl}}$.
+
+% TODO cytat: standardowa monografia teorii regulacji (Ogata K. "Modern Control Engineering",
+% 5th ed., Pearson 2010 lub Astrom K., Murray R. "Feedback Systems: An Introduction
+% for Scientists and Engineers", Princeton 2008). Rafal nie ma PDF -- TODO.
+
+W~kontekście dwukierunkowych przetwornic DC-DC pracujących w~mikrosieciach, regulatory PI cierpią na~cztery zasadnicze ograniczenia:
+\begin{enumerate}
+    \item \textbf{Ograniczenie pasma przepustowości} -- jak~wykazano w~podrozdziale~\ref{sec:nmp}, obecność zera w~prawej półpłaszczyźnie limituje osiągalne pasmo zamkniętej pętli sprzężenia zwrotnego do~połowy częstotliwości tego~zera, co~w~typowych konstrukcjach 1--2~kW odpowiada pasmu rzędu pojedynczych kHz~\cite{erickson2020}. Próby ręcznego przekroczenia tej~granicy prowadzą do~oscylacji granicznych lub~utraty stabilności.
+    \item \textbf{Dobór nastaw względem~jednego punktu pracy} -- standardowe procedury syntezy (metoda Zieglera-Nicholsa, lokowanie biegunów, kompensacja częstotliwościowa) wymagają znajomości zlinearyzowanego modelu obiektu w~okolicy ustalonego punktu pracy. W~mikrosieciach DC, w~których obciążenie i~napięcie zadane podlegają częstym, znacznym wahaniom, nastawy strojone dla~jednego stanu mogą wykazywać degradację jakości regulacji (lub~wręcz~utratę stabilności) w~innych stanach pracy.
+    \item \textbf{Brak adaptacji do~zmiennych warunków pracy} -- klasyczny regulator PI ma~ustalone nastawy $K_p$, $K_i$ wbudowane na~etapie programowania mikrokontrolera. Rozszerzenia adaptacyjne (gain~scheduling, MRAC, regulator samostrojący) wymagają znacznie większego nakładu projektowego i~wprowadzają dodatkową złożoność, którą trudno zweryfikować formalnie w~przemyśle.
+    \item \textbf{Konieczność modelowania pełnej dynamiki obiektu} -- formalna synteza regulatora PI w~oparciu o~kryteria stabilności (margines wzmocnienia, margines fazy) wymaga jawnego sformułowania funkcji transmitancji obiektu, co~obejmuje identyfikację parametrów pasywnych ($L$, $C$, ESR, ESL) oraz~modelowanie strat przewodzenia i~przełączania kluczy półprzewodnikowych. W~serwisowanych instalacjach przemysłowych parametry te~podlegają starzeniu i~odchyleniom produkcyjnym, co~degraduje dokładność modelu odniesienia.
+\end{enumerate}
+
+Powyższe ograniczenia motywują poszukiwanie strategii sterowania o~odmiennych właściwościach -- albo~bezpośrednio uwzględniających nieliniową dynamikę przekształtnika w~ramach predykcji jego przyszłego stanu (sterowanie predykcyjne, podrozdział~\ref{sec:fsmpc}), albo~całkowicie rezygnujących z~konieczności jawnego modelowania obiektu (sterowanie bezmodelowe Bang-Bang, podrozdział~\ref{sec:bb}).
 
 \section{Predykcyjna kontrola zbioru skończonego}
 \label{sec:fsmpc}
