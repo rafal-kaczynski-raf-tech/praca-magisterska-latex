@@ -133,5 +133,32 @@ W~praktycznej implementacji prezentowanej w~niniejszej pracy (rozdział~\ref{ch:
 \section{Podsumowanie przeglądu}
 \label{sec:przeglad-podsumowanie}
 
-% TODO: synteza wyników przeglądu, uzasadnienie wyboru MF-BB + PSO jako
-% kierunku realizacji.
+Przegląd omawiany w~niniejszym rozdziale obejmował systematyczną analizę ewolucji strategii sterowania dla~dwukierunkowych przekształtników DC-DC w~zastosowaniach mikrosieciowych, poczynając od~topologicznych uwarunkowań sprzętu (sekcja~\ref{sec:przetwornice}), poprzez~fundamentalne ograniczenia dynamiki fazy nieminimalnej (sekcja~\ref{sec:nmp}), aż~do~porównania trzech zasadniczych podejść algorytmicznych: klasycznych regulatorów PI (sekcja~\ref{sec:klasyczne}), predykcyjnego FS-MPC (sekcja~\ref{sec:fsmpc}) oraz~bezmodelowych strategii Bang-Bang (sekcja~\ref{sec:bb}).
+
+Syntetyzując powyższe analizy, następujące cechy czynią algorytm MF-BB optymalnym wyborem w~kontekście niniejszej pracy:
+
+\begin{enumerate}
+    \item \textbf{Eliminacja potrzeby formalnego modelowania obiektu} -- w~odróżnieniu od~klasycznego PI (wymagającego identyfikacji parametrów pasywnych oraz~strat) czy~FS-MPC (wymagającego dyskretyzowanego modelu dynamiki), MF-BB operuje wyłącznie na~mierzonych wielkościach obwodowych, bezpośrednio zawierających efekty wszystkich niemodelowanych zjawisk fizycznych.
+    
+    \item \textbf{Zdolność do~radzenia sobie z~dynamiką NMP} -- poprzez~włączenie członu predykcyjnego z~wagą~$w_i$, algorytm kompensuje początkową odwrotną reakcję napięciową, unikając fundamentalnego ograniczenia pasma liniowych regulatorów (sekcja~\ref{sec:nmp}).
+    
+    \item \textbf{Niski koszt obliczeniowy} -- pojedynczy krok sterowania wymaga~kilka operacji arytmetycznych, co~umożliwia implementację na~najprostszych mikrokontrolerach pracujących z~częstotliwością MHz, w~porównaniu z~eksponencjalnie rosnącym budżetem FS-MPC przy~rozszerzeniu horyzontu predykcji.
+    
+    \item \textbf{Ograniczona liczba parametrów do~strojenia} -- algorytm MF-BB wymaga doboru zaledwie dwóch parametrów $(w_i, f_c)$: wagi predyktora oraz~częstotliwości granicznej filtru dolnoprzepustowego. Stałość liczby parametrów niezależnie od~zmian topologii lub~zakresu działania przekształtnika stanowi istotną zaletę w~porównaniu z~problemem doboru~$K_p, K_i$ dla~każdego punktu pracy w~klasycznej pętli PI.
+    
+    \item \textbf{Naturalny interfejs do~automatycznego strojenia} -- fakt, że~tylko dwa~parametry podlegają optymalizacji oraz~że~oba~są~zmiennymi rzeczywistoliczbowymi w~przestrzeni ciągłej, czyni algorytm idealnym kandydatem do~automatycznego strojenia metodą metaheurystyczną (PSO), co~omawiane będzie szczegółowo w~rozdziale~\ref{ch:ai}.
+\end{enumerate}
+
+Wybór algorytmu PSO (Particle Swarm Optimization) jako narzędzia optymalizacji parametrów MF-BB uzasadniają następujące względy:
+
+\begin{enumerate}
+    \item \textbf{Brak potrzeby gradientów} -- w~odróżnieniu od~metod gradientowych, PSO nie~wymaga analitycznego obliczenia pochodnych cząstkowych funkcji kosztu względem~$(w_i, f_c)$. Jest~to~istotne, gdyż~funkcja kosztu (wprowadzona w~rozdziale~\ref{ch:ai}) zależy od~całej trajektorii stanu wyjściowego przekształtnika -- jej~różniczkowalność nie~jest~gwarantowana ze~względu na~nieciągłości sygnału sterującego $s\in\{0,1\}$ oraz~nieliniowości modelu fizycznego.
+    
+    \item \textbf{Algorytm niezależny od~wymiaru przestrzeni} -- struktura PSO skaluje się liniowo z~wymiarem problemu optymalizacji, umożliwiając ewentualne rozszerzenie liczby parametrów (np.~dodanie współczynników predyktora wyższego rzędu) bez~fundamentalnych zmian algorytmu.
+    
+    \item \textbf{Sprawdzona skuteczność w~strojeniu kontrolerów} -- literatura tematu (m.in.~artykuły Tatariego i~Iwańskiego) uzasadnia wybór PSO dla~problemu strojenia histerezowych regulatorów energoelektronicznych, wskazując na~zbieżność do~rozwiązań porównywalnych z~klasycznymi metodami optimizacyjnymi.
+    
+    \item \textbf{Duża popularność i~dojrzałość implementacyjna} -- algorytm PSO jest~stosunkowo prosty do~implementacji od~podstaw (co~omawiane będzie w~rozdziale~\ref{ch:ai}), a~jednocześnie na~tyle dobrze~znany, że~nie~wymaga formalnego dowodu zbieżności czy~uzasadniania wyboru w~dyskusjach naukowych.
+\end{enumerate}
+
+Strategia pracy realizowana w~niniejszym projekcie wynika naturalnie z~powyższych analiz: (i)~implementacja bliźniaka cyfrowego MF-BB w~języku Python z~jawnym modelowaniem dynamiki przekształtnika, (ii)~strojenie parametrów $(w_i, f_c)$ za~pomocą PSO poprzez~systematyczną ewaluację pięciu konkurujących funkcji kosztu (omówionych w~rozdziale~\ref{ch:ai}), oraz~(iii)~walidacja wyników w~środowisku referencyjnym PSIM w~celu potwierdzenia transferu wiedzy z~systemu zmodelowanego. Szczegółowa implementacja oraz~wyniki eksperymentów stanowią zawartość następnych czterech rozdziałów niniejszej pracy.
