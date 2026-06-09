@@ -152,7 +152,7 @@ Syntetyzując powyższe analizy, następujące cechy czynią algorytm MF-BB opty
 Wybór algorytmu PSO (Particle Swarm Optimization) jako narzędzia optymalizacji parametrów MF-BB uzasadniają następujące względy:
 
 \begin{enumerate}
-    \item \textbf{Brak potrzeby gradientów} -- w~odróżnieniu od~metod gradientowych, PSO nie~wymaga analitycznego obliczenia pochodnych cząstkowych funkcji kosztu względem~$(w_i, f_c)$. Jest~to~istotne, gdyż~funkcja kosztu (wprowadzona w~rozdziale~\ref{ch:ai}) zależy od~całej trajektorii stanu wyjściowego przekształtnika -- jej~różniczkowalność nie~jest~gwarantowana ze~względu na~nieciągłości sygnału sterującego $s\in\{0,1\}$ oraz~nieliniowości modelu fizycznego.
+    \item \textbf{Brak potrzeby gradientów} -- w~odróżnieniu od~metod gradientowych, PSO nie~wymaga analitycznego obliczenia pochodnych cząstkowych funkcji kosztu względem~$(w_i, f_c)$. Jest~to~istotne, gdyż~funkcja kosztu (wprowadzona w~rozdziale~\ref{ch:ai}) zależy od~całej trajektorii stanu wyjściowego przekształtnika -- nie~jest~to~funkcja gładka ze~względu na~nieciągłości sygnału sterującego $s\in\{0,1\}$ oraz~nieliniowości modelu fizycznego.
     
     \item \textbf{Algorytm niezależny od~wymiaru przestrzeni} -- struktura PSO skaluje się liniowo z~wymiarem problemu optymalizacji, umożliwiając ewentualne rozszerzenie liczby parametrów (np.~dodanie współczynników predyktora wyższego rzędu) bez~fundamentalnych zmian algorytmu.
     
