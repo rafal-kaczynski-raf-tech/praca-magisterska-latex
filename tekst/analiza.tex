@@ -99,25 +99,36 @@ Powyższe ograniczenia, w~szczególności wymagania obliczeniowe i~wrażliwość
 \section{Strategie sterowania Bang-Bang}
 \label{sec:bb}
 
+Sterowanie Bang-Bang (synonimicznie określane jako~sterowanie histerezowe lub~przekaźnikowe) jest~rodziną nieliniowych strategii regulacji, w~których sygnał sterujący przyjmuje wyłącznie wartości skrajne ze~swojego dopuszczalnego zakresu, a~przełączanie między~tymi wartościami odbywa się na~podstawie bezpośredniego porównania mierzonej zmiennej procesowej z~określonymi progami przełączania. W~kontekście dwukierunkowych przekształtników DC-DC zmienną sterowaną jest~typowo prąd cewki~$i_L$, a~sygnałem sterującym -- stan klucza $s\in\{0,1\}$, co~odpowiada w~istocie modulacji częstotliwościowej w~miejsce~klasycznej modulacji PWM o~ustalonej częstotliwości. Główną zaletą tej~rodziny metod jest~ich~strukturalna prostota implementacyjna oraz brak~konieczności jawnego modelowania pełnej dynamiki obiektu.
+
 \subsection{Skompensowane sterowanie Bang-Bang}
 \label{subsec:bb-comp}
 
-% TODO: omówienie skompensowanego BB jako rozwinięcia klasycznego histerezowego
-% sterowania.
+Klasyczne, niekompensowane sterowanie histerezowe -- znane w~literaturze pod~angielską nazwą \emph{hysteretic current control} -- jest~najprostszym wariantem rodziny: klucz dolny włącza się, gdy~mierzona wartość prądu cewki spadnie poniżej~progu dolnego $i_L^{*} - \Delta i/2$, a~wyłącza, gdy~przekroczy próg górny $i_L^{*} + \Delta i/2$. Szerokość pasma histerezy~$\Delta i$ jest~głównym parametrem strojącym, jednoznacznie wyznaczającym amplitudę tętnień prądu cewki oraz, pośrednio, średnią częstotliwość przełączeń~\cite{tatari2024mfbb}.
+
+Główną wadą podejścia niekompensowanego jest~silna zależność średniej częstotliwości przełączania~$f_{\mathrm{sw}}$ od~bieżącego napięcia wejściowego, napięcia wyjściowego oraz~indukcyjności cewki, co~prowadzi do~znacznego rozrzutu widma EMI oraz~utrudnia projektowanie sekcji filtrującej. \emph{Skompensowane} sterowanie Bang-Bang adresuje ten~problem przez~wprowadzenie adaptacyjnej modyfikacji progów przełączania, której postać zależy od~aktualnego punktu pracy układu. W~typowej implementacji szerokość pasma histerezy jest~dynamicznie korygowana proporcjonalnie do~$f(V_{\mathrm{in}}, V_{\mathrm{out}})$, tak~aby częstotliwość przełączeń pozostawała w~przybliżeniu stała niezależnie od~stanu pracy.
+
+% TODO cytat: klasyczna praca o kompensowanym sterowaniu histerezowym
+% (np. Bose B.K. "Modern Power Electronics and AC Drives", Prentice Hall 2001
+% lub konkretna praca Iwanski/Tatari, jezeli rozszerzaja temat). Rafal nie ma PDF -- TODO.
 
 \subsection{Sterowanie Bang-Bang z~podwojoną częstotliwością próbkowania}
 \label{subsec:bb-double}
 
-% TODO: technika podwojonej częstotliwości próbkowania w~celu poprawy wyników
-% cyfrowej implementacji BB.
+W~implementacjach cyfrowych klasyczne sterowanie Bang-Bang napotyka dodatkowe ograniczenie wynikające z~dyskretnej natury próbkowania pomiarów -- decyzja o~przełączeniu klucza może zostać podjęta wyłącznie w~momentach kolejnych próbek $T_{s,\mathrm{ctrl}}$, co~prowadzi do~przekraczania nominalnych progów histerezy o~wartość proporcjonalną do~pochodnej $\mathrm{d}i_L/\mathrm{d}t$ oraz~okresu próbkowania. W~praktyce zjawisko to~objawia się wzrostem tętnień prądu cewki oraz~przekraczaniem teoretycznego pasma histerezy~$\Delta i$.
+
+Naturalnym sposobem ograniczenia tego~zjawiska, omawianym w~literaturze, jest~zastosowanie tzw.~\emph{podwojonej częstotliwości próbkowania} (\emph{double-sampling}), w~którym pomiary prądu cewki realizowane są~dwukrotnie w~każdym okresie pracy regulatora -- raz w~momencie rosnącej, raz~w~momencie opadającej fazy prądu. Dzięki temu zabiegowi opóźnienie wykrycia przekroczenia progu jest~efektywnie zredukowane o~połowę, co~przekłada się na~proporcjonalne zmniejszenie nadmiarowych tętnień prądu~\cite{tatari2024mfbb}.
 
 \subsection{Bezmodelowe sterowanie Bang-Bang (MF-BB)}
 \label{subsec:mfbb}
 
-% TODO: kulminacyjny punkt przeglądu — MF-BB. Generuje pożądane odniesienie
-% prądu cewki bezpośrednio z~mierzonych sygnałów, omijając konieczność
-% modelowania całego systemu i~estymacji prądu obciążenia. Uzasadnienie wyboru
-% MF-BB jako optymalnej strategii dla pracy.
+Kulminacyjnym punktem przeglądu strategii Bang-Bang jest~zaproponowany przez~Tatariego i~Iwańskiego algorytm \emph{Model-Free Bang-Bang} (MF-BB), stanowiący istotne uogólnienie klasycznego podejścia histerezowego~\cite{tatari2024mfbb}. Fundamentalna różnica polega na~sposobie generowania wartości zadanej prądu cewki~$i_L^{*}$: o~ile w~podejściach klasycznych wartość ta~musi być wyznaczana przez~zewnętrzną pętlę napięciową (typowo regulator PI), wymagającą znajomości parametrów obiektu, o~tyle algorytm MF-BB generuje pożądane odniesienie prądu \emph{bezpośrednio} z~mierzonych sygnałów obwodowych ($u_{dc}$, $u_{\mathrm{ref}}$, $i_L$), bez~konieczności jawnego modelowania pełnej dynamiki przekształtnika ani~estymacji prądu obciążenia.
+
+Z~punktu widzenia inżynierskiego ten~zabieg eliminuje cztery~klasyczne źródła błędów modelowych obecne w~strukturach z~zewnętrzną pętlą PI: (i)~wrażliwość na~niedokładność wartości pasywnych $L$, $C$, (ii)~konieczność modelowania strat przewodzenia i~przełączania, (iii)~konieczność jawnej~estymacji prądu obciążenia (typowo realizowanej obserwatorem stanu lub~analogowym filtrem dolnoprzepustowym) oraz~(iv)~kompromisy w~doborze nastaw regulatora PI omawiane w~podrozdziale~\ref{subsec:pi}. Algorytm MF-BB osiąga ten~rezultat poprzez~włączenie do~prawa sterowania członu predykcyjnego, którego waga~$w_i$ jest~głównym parametrem strojącym -- regulator ekstrapoluje krótkoterminowy kierunek zmian napięcia wyjściowego i~na~tej~podstawie wyprzedzająco modyfikuje wartość zadaną prądu cewki, kompensując w~ten~sposób dynamikę fazy nieminimalnej (podrozdział~\ref{sec:nmp}) bez~potrzeby formalnej syntezy regulatora w~przestrzeni częstotliwości.
+
+Dodatkową cechą podnoszącą praktyczną przydatność MF-BB w~zastosowaniach mikrosieciowych jest~niski wymagany budżet obliczeniowy -- pojedynczy krok algorytmu sprowadza się do~kilku operacji arytmetycznych (różnica, mnożenie wagą predyktora, filtracja dolnoprzepustowa, porównanie z~progiem histerezy), co~pozwala na~implementację nawet na~najprostszych mikrokontrolerach 8-bitowych pracujących z~częstotliwością MHz. Stanowi to~istotną przewagę nad~omawianym wcześniej FS-MPC, którego budżet predykcyjny rośnie eksponencjalnie z~horyzontem $N_p$ (podrozdział~\ref{sec:fsmpc}).
+
+W~praktycznej implementacji prezentowanej w~niniejszej pracy (rozdział~\ref{ch:realizacja}), algorytm MF-BB wzbogacono dodatkowo o~mechanizm estymacji prądu obciążenia oraz~cyfrowy filtr dolnoprzepustowy w~ścieżce predyktora, których nastawy ($w_i$, $f_c$) podlegają automatycznemu strojeniu metodą metaheurystyczną PSO (rozdział~\ref{ch:ai}).
 
 \section{Podsumowanie przeglądu}
 \label{sec:przeglad-podsumowanie}
