@@ -294,7 +294,106 @@ Jakościowe porównanie wpływu wyboru funkcji celu na~odpowiedź czasową regul
     \label{fig:pso-przebiegi}
 \end{figure}
 
-Powyższe porównanie potwierdza, że~dobór funkcji celu jest~istotniejszy dla~ostatecznego charakteru regulacji niż~sam wybór algorytmu metaheurystycznego -- pięć przebiegów PSO o~identycznej konfiguracji algorytmu zwróciło pięć jakościowo różnych nastaw regulatora, każdy optymalny w~sensie swojego kryterium. W~podsumowaniu pracy (rozdział~\ref{ch:podsumowanie}) jako~bazowe rekomendowane jest~kryterium ITAE, zapewniające najlepszy kompromis między~szybkością ustalania a~tłumieniem oscylacji końcowych.
+Powyższe porównanie potwierdza, że~dobór funkcji celu jest~istotniejszy dla~ostatecznego charakteru regulacji niż~sam wybór algorytmu metaheurystycznego -- pięć przebiegów PSO o~identycznej konfiguracji algorytmu zwróciło pięć jakościowo różnych nastaw regulatora, każdy optymalny w~sensie swojego kryterium.
+
+\subsection{Optymalizacja wielokryterialna w~scenariuszu dynamicznym i~redukcja tętnień prądu}
+\label{subsec:pso-dynamic-scenario}
+
+W~celu ostatecznej weryfikacji zdolności algorytmu PSO do~równoważenia jakości regulacji napięcia oraz redukcji tętnień prądu cewki, przeprowadzono optymalizację w~złożonym scenariuszu dynamicznym o~horyzoncie $T_{\mathrm{end}} = 0{,}30~\mathrm{s}$. Obiekt badawczy skonfigurowano dla parametrów: $V_{\mathrm{in}} = 100~\mathrm{V}$, $L = 2~\mathrm{mH}$, $C = 450~\mu\mathrm{F}$ oraz znamionowego obciążenia $R_{\mathrm{load}} = 47{,}619~\Omega$ (co odpowiada mocy znamionowej $P \approx 1{,}2~\mathrm{kW}$ przy napięciu $240~\mathrm{V}$).
+
+Scenariusz obejmuje sekwencję głębokich zaburzeń stanu pracy:
+\begin{enumerate}
+    \item $t \in [0;\, 50)~\mathrm{ms}$ -- rozruch układu od napięcia $u_{dc}(0) = 100~\mathrm{V}$ do poziomu zadanego $u_{\mathrm{ref}} = 240~\mathrm{V}$;
+    \item $t = 50~\mathrm{ms}$ -- nagłe zrzucenie obciążenia ($R_{\mathrm{load}} \leftarrow 10~\mathrm{M}\Omega$, stan jałowy / rozwarcie obwodu wyjściowego);
+    \item $t = 100~\mathrm{ms}$ -- ponowne załączenie nominalnego odbiornika $R_{\mathrm{load}} \leftarrow 47{,}619~\Omega$;
+    \item $t = 150~\mathrm{ms}$ -- skok napięcia zadanego w~dół: $u_{\mathrm{ref}} \leftarrow 160~\mathrm{V}$;
+    \item $t = 200~\mathrm{ms}$ -- powtórne odłączenie obciążenia ($R_{\mathrm{load}} \leftarrow 10~\mathrm{M}\Omega$);
+    \item $t = 250~\mathrm{ms}$ -- powrót do pełnego obciążenia przy obniżonym napięciu wyjściowym;
+    \item $t = 300~\mathrm{ms}$ -- zakończenie cyklu testowego.
+\end{enumerate}
+
+Dla opisanego scenariusza wykonano optymalizację PSO nastaw regulatora $\mathbf{x} = [w_i, f_c]$ z~uwzględnieniem modelowej korekty opóźnienia próbkowania. Porównano cztery warianty funkcji celu: kryterium bazowe oparte wyłącznie na błędzie napięcia (ITAE) oraz trzy kryteria świadome prądu (CurrentAware, CurrentOscillation, CurrentEffort) zdefiniowane w~podrozdziale~\ref{subsec:cost-current}. Znalezione przez algorytm optymalne wektory nastaw zestawiono w~tabeli~\ref{tab:pso-dynamic-opt}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Optymalne nastawy regulatora znalezione przez PSO w~scenariuszu dynamicznym ($T_{\mathrm{end}} = 0{,}30~\mathrm{s}$).}
+    \label{tab:pso-dynamic-opt}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Funkcja celu} & $w_i^*$ & $f_c^*$ [Hz] & $J^*$ \\
+        \midrule
+        ITAE (odniesienie)         & 0{,}2133 & 1854 & $1{,}58\cdot 10^{-2}$ \\
+        CurrentAware (Wariant 1)     & 0{,}2631 & 7056 & $5{,}60\cdot 10^{-1}$ \\
+        CurrentOscillation (Wariant 2)& 0{,}2124 & 2039 & $4{,}15\cdot 10^{-1}$ \\
+        CurrentEffort (Wariant 3)    & 0{,}2131 & 2767 & $7{,}16\cdot 10^{-1}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Kluczowym elementem analizy jest ilościowa ocena jakości pracy w~stanach ustalonych pomiędzy komutacjami obciążenia i~skokami referencji. Wskaźniki jakości wyznaczono z~okna obejmującego ostatnie 40\,\% czasu trwania każdego z~segmentów, co eliminuje wpływ stanów przejściowych. Zestawienie metryk zawiera tabela~\ref{tab:scenariusz-metryki}.
+
+\begin{table}[h!]
+    \centering
+    \small
+    \caption{Zestawienie wskaźników w~stanach ustalonych (ostatnie 40\,\% każdego segmentu) dla czterech wariantów nastrojonych przez PSO.}
+    \label{tab:scenariusz-metryki}
+    \begin{tabular}{lrrrrr}
+        \toprule
+        \textbf{Segment} & $u_{\mathrm{ref}}$~[V] & $e_u$~[V] & $\bar{i}_L$~[A] & $\Delta i_{L,\mathrm{pp}}$~[A] & Tętnienia [\%] \\
+        \midrule
+        \multicolumn{6}{l}{\textbf{ITAE (odniesienie: $w_i^* = 0{,}2133$, $f_c^* = 1854$~Hz)}} \\
+        $[0{,}05;\, 0{,}10)$~s (OFF) & 240{,}0 & $-0{,}11$ & $-0{,}05$ & 3{,}43 & --- \\
+        $[0{,}10;\, 0{,}15)$~s (ON)  & 240{,}0 & $-0{,}29$ & 12{,}10 & 5{,}70 & 47{,}12 \\
+        $[0{,}15;\, 0{,}20)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 3{,}45 & 64{,}01 \\
+        $[0{,}20;\, 0{,}25)$~s (OFF) & 160{,}0 & $+0{,}12$ & $-0{,}02$ & 2{,}35 & --- \\
+        $[0{,}25;\, 0{,}30)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 2{,}62 & 48{,}71 \\
+        \midrule
+        \multicolumn{6}{l}{\textbf{CurrentAware (Wariant 1: $w_i^* = 0{,}2631$, $f_c^* = 7056$~Hz)}} \\
+        $[0{,}05;\, 0{,}10)$~s (OFF) & 240{,}0 & $-0{,}14$ & $-0{,}05$ & 3{,}41 & --- \\
+        $[0{,}10;\, 0{,}15)$~s (ON)  & 240{,}0 & $-0{,}35$ & 12{,}09 & \textbf{3{,}73} & \textbf{30{,}83} \\
+        $[0{,}15;\, 0{,}20)$~s (ON)  & 160{,}0 & $+0{,}20$ & 5{,}38 & 2{,}61 & 48{,}39 \\
+        $[0{,}20;\, 0{,}25)$~s (OFF) & 160{,}0 & $+0{,}14$ & $-0{,}02$ & 2{,}34 & --- \\
+        $[0{,}25;\, 0{,}30)$~s (ON)  & 160{,}0 & $+0{,}20$ & 5{,}38 & 2{,}55 & 47{,}28 \\
+        \midrule
+        \multicolumn{6}{l}{\textbf{CurrentOscillation (Wariant 2: $w_i^* = 0{,}2124$, $f_c^* = 2039$~Hz)}} \\
+        $[0{,}05;\, 0{,}10)$~s (OFF) & 240{,}0 & $-0{,}11$ & $-0{,}05$ & 3{,}43 & --- \\
+        $[0{,}10;\, 0{,}15)$~s (ON)  & 240{,}0 & $-0{,}29$ & 12{,}09 & 6{,}80 & 56{,}24 \\
+        $[0{,}15;\, 0{,}20)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 3{,}47 & 64{,}45 \\
+        $[0{,}20;\, 0{,}25)$~s (OFF) & 160{,}0 & $+0{,}12$ & $-0{,}02$ & 2{,}33 & --- \\
+        $[0{,}25;\, 0{,}30)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 3{,}45 & 64{,}10 \\
+        \midrule
+        \multicolumn{6}{l}{\textbf{CurrentEffort (Wariant 3: $w_i^* = 0{,}2131$, $f_c^* = 2767$~Hz)}} \\
+        $[0{,}05;\, 0{,}10)$~s (OFF) & 240{,}0 & $-0{,}11$ & $-0{,}05$ & 3{,}42 & --- \\
+        $[0{,}10;\, 0{,}15)$~s (ON)  & 240{,}0 & $-0{,}29$ & 12{,}10 & 5{,}70 & 47{,}09 \\
+        $[0{,}15;\, 0{,}20)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 3{,}45 & 64{,}10 \\
+        $[0{,}20;\, 0{,}25)$~s (OFF) & 160{,}0 & $+0{,}12$ & $-0{,}02$ & 2{,}37 & --- \\
+        $[0{,}25;\, 0{,}30)$~s (ON)  & 160{,}0 & $+0{,}17$ & 5{,}38 & 3{,}45 & 64{,}12 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Pełne przebiegi czasowe napięcia i~prądu dla wszystkich czterech wariantów w~horyzoncie $0{,}30~\mathrm{s}$ przedstawiono na~rysunku~\ref{fig:scenariusz-prof-pelny}, natomiast zbliżenie w~pełnej rozdzielczości próbek ($0{,}5~\mu\mathrm{s}$) w~oknie $140$--$210~\mathrm{ms}$ (obejmujące skok wartości zadanej $240 \to 160~\mathrm{V}$ oraz wyłączenie obciążenia) zilustrowano na~rysunku~\ref{fig:scenariusz-prof-zoom}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/wykres_scenariusz_prof_pelny.png}
+    \caption{Przebiegi napięcia wyjściowego $u_{dc}(t)$ oraz prądu dławika $i_L(t)$ dla czterech wariantów funkcji celu w~scenariuszu dynamicznym ($T_{\mathrm{end}} = 0{,}30~\mathrm{s}$, linie przerywane wskazują momenty komutacji obciążenia i~skoku referencji).}
+    \label{fig:scenariusz-prof-pelny}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/wykres_scenariusz_prof_zoom.png}
+    \caption{Zbliżenie mikrosekundowe (okno $140$--$210~\mathrm{ms}$, pełna rozdzielczość próbek $0{,}5~\mu\mathrm{s}$) ilustrujące skok napięcia zadanego w~$t=150~\mathrm{ms}$ oraz zrzucenie obciążenia w~$t=200~\mathrm{ms}$.}
+    \label{fig:scenariusz-prof-zoom}
+\end{figure}
+
+Analiza uzyskanych wyników prowadzi do~trzech zasadniczych wniosków:
+\begin{enumerate}
+    \item \textbf{Wysoka precyzja regulacji napięcia we wszystkich wariantach:} średni błąd napięcia w~stanie ustalonym mieści się w~wąskim przedziale od~$-0{,}35~\mathrm{V}$ do~$+0{,}20~\mathrm{V}$ (błąd względny poniżej $0{,}15\,\%$), a~średni prąd cewki idealnie realizuje teoretyczny bilans mocy: $\bar{i}_L \approx 12{,}09~\mathrm{A}$ dla $240~\mathrm{V}$ ($1{,}2~\mathrm{kW}$) oraz $\bar{i}_L \approx 5{,}38~\mathrm{A}$ dla $160~\mathrm{V}$ ($538~\mathrm{W}$).
+    \item \textbf{Wyraźna redukcja tętnień prądu w~wariancie CurrentAware:} algorytm PSO dla funkcji celu $J_{\mathrm{CA}}$ dobrał wyższą wagę prądu $w_i^* = 0{,}2631$ oraz znacznie szersze pasmo filtru $f_c^* = 7056~\mathrm{Hz}$. Skutkiem tego amplituda tętnień prądu w~stanie ustalonym pod pełnym obciążeniem ($240~\mathrm{V}$) spadła z~$5{,}70~\mathrm{A}$ ($47{,}12\,\%$ w~ITAE) do~$3{,}73~\mathrm{A}$ ($30{,}83\,\%$). Oznacza to~zmniejszenie rozstępu tętnień prądu o~aż~$34{,}6\,\%$ bez utraty stabilności i~bez widocznego pogorszenia dynamiki napięcia.
+    \item \textbf{Strukturalna natura tętnień prądu:} warianty CurrentOscillation i~CurrentEffort zbiegły do~nastaw niemal identycznych jak bazowe ITAE ($w_i^* \approx 0{,}213$, $f_c^* \approx 2000$--$2700~\mathrm{Hz}$). Wynika to~z~faktu, że~dolna granica tętnień jest uwarunkowana sprzętowo przez indukcyjność $L$ i~częstotliwość komutacji ($\Delta i_L \approx \frac{V_{\mathrm{in}} D T_{\mathrm{sw}}}{L}$). Człon prądowy w~funkcji celu działa jako bariera odrzucająca patologiczne nastawy regulatora, pozwalając algorytmowi AI osiągnąć fizyczną dolną granicę tętnień dopuszczalną w~danym układzie.
+\end{enumerate}
 
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
