@@ -131,7 +131,7 @@ W~bazowym algorytmie MF-BB wolnozmienna wartość zadana prądu cewki~$i_{\mathr
 \end{equation}
 którego parametry ($\alpha = 0{,}01$, $\beta = 0{,}98$ dla~częstotliwości próbkowania $f_s = 100$~kHz oraz częstotliwości odcięcia $f_c = 321$~Hz w~\cite{tatari2024mfbb}) pozwalają odfiltrować szybkie tętnienia łączeniowe i~uzyskać średni punkt pracy prądu dławika.
 
-Decyzja o~stanie klucza opiera się na~liniowej powierzchni przełączającej $S(k)$, łączącej uchyb regulacji napięcia oraz uchyb prądowy:
+Decyzja o~stanie klucza opiera się na~liniowej funkcji przełączającej (funkcji decyzyjnej) $S(k)$, łączącej błąd regulacji napięcia oraz błąd prądowy:
 \begin{equation}
     e_u(k) = u_{\mathrm{ref}}(k) - u_{\mathrm{out}}(k), \qquad e_i(k) = i_{\mathrm{des}}(k) - i_L(k),
     \label{eq:mfbb-errors}
@@ -140,7 +140,7 @@ Decyzja o~stanie klucza opiera się na~liniowej powierzchni przełączającej $S
     S(k) = e_u(k) + w_i\,e_i(k),
     \label{eq:mfbb-surface}
 \end{equation}
-gdzie $w_i > 0$ jest~bezwymiarową wagą członu prądowego. Dyskretne polecenie sterujące $s_{\mathrm{cmd}}(k)\in\{0,1\}$ wyznaczane jest~bezpośrednio przez~funkcję progową (komparator):
+gdzie $w_i > 0$ jest~bezwymiarową wagą członu prądowego. Dyskretne polecenie sterujące $s_{\mathrm{cmd}}(k)\in\{0,1\}$ wyznaczane jest~bezpośrednio przez~prostą dwustanową regułę decyzyjną (warunek progowy):
 \begin{equation}
     s_{\mathrm{cmd}}(k) =
     \begin{cases}
@@ -150,7 +150,7 @@ gdzie $w_i > 0$ jest~bezwymiarową wagą członu prądowego. Dyskretne polecenie
     \label{eq:mfbb-comparator}
 \end{equation}
 
-Warto odnotować istotny szczegół formalno-matematyczny: w~oryginalnym druku artykułu~\cite{tatari2024mfbb} w~równaniu definiującym powierzchnię przełączającą omyłkowo wydrukowano moduł uchybu prądu $\lvert i_{\mathrm{des}} - i_L\rvert$. Dla~prawidłowej realizacji sterowania przekaźnikowego niezbędne jest~jednak zachowanie informacji o~kierunku błędu, stąd w~rzeczywistej implementacji stosuje się uchyb ze~znakiem~\eqref{eq:mfbb-errors} i~bezpośrednie porównanie z~zerem~\eqref{eq:mfbb-comparator}.
+Warto odnotować istotny szczegół formalno-matematyczny: w~oryginalnym druku artykułu~\cite{tatari2024mfbb} w~równaniu definiującym funkcję przełączającą omyłkowo wydrukowano moduł błędu prądu $\lvert i_{\mathrm{des}} - i_L\rvert$. Dla~prawidłowej realizacji sterowania zero-jedynkowego niezbędne jest~jednak zachowanie informacji o~kierunku (znaku) błędu, stąd w~rzeczywistej implementacji programistycznej stosuje się błąd ze~znakiem~\eqref{eq:mfbb-errors} oraz bezpośrednie porównanie z~zerem~\eqref{eq:mfbb-comparator}.
 
 Z~punktu widzenia inżynierskiego ten~zabieg eliminuje cztery~klasyczne źródła błędów modelowych obecne w~strukturach z~zewnętrzną pętlą PI: (i)~wrażliwość na~niedokładność wartości pasywnych $L$, $C$, (ii)~konieczność modelowania strat przewodzenia i~przełączania, (iii)~konieczność jawnej~estymacji prądu obciążenia oraz~(iv)~kompromisy w~doborze nastaw regulatora PI omawiane w~podrozdziale~\ref{subsec:pi}. Algorytm MF-BB osiąga ten~rezultat poprzez~włączenie do~prawa sterowania członu prądowego z~wagą~$w_i$, który~działa jako dynamiczny stabilizator i~kompensuje dynamikę fazy nieminimalnej (podrozdział~\ref{sec:nmp}) bez~potrzeby formalnej syntezy regulatora w~przestrzeni częstotliwości.
 
