@@ -122,13 +122,43 @@ Naturalnym sposobem ograniczenia tego~zjawiska, omawianym w~literaturze, jest~za
 \subsection{Bezmodelowe sterowanie Bang-Bang (MF-BB)}
 \label{subsec:mfbb}
 
-Kulminacyjnym punktem przeglądu strategii Bang-Bang jest~zaproponowany przez~Tatariego i~Iwańskiego algorytm \emph{Model-Free Bang-Bang} (MF-BB), stanowiący istotne uogólnienie klasycznego podejścia histerezowego~\cite{tatari2024mfbb}. Fundamentalna różnica polega na~sposobie generowania wartości zadanej prądu cewki~$i_L^{*}$: o~ile w~podejściach klasycznych wartość ta~musi być wyznaczana przez~zewnętrzną pętlę napięciową (typowo regulator PI), wymagającą znajomości parametrów obiektu, o~tyle algorytm MF-BB generuje pożądane odniesienie prądu \emph{bezpośrednio} z~mierzonych sygnałów obwodowych ($u_{dc}$, $u_{\mathrm{ref}}$, $i_L$), bez~konieczności jawnego modelowania pełnej dynamiki przekształtnika ani~estymacji prądu obciążenia.
+Kulminacyjnym punktem przeglądu strategii Bang-Bang jest~zaproponowany przez~Tatariego i~Iwańskiego algorytm \emph{Model-Free Bang-Bang} (MF-BB), stanowiący istotne uogólnienie klasycznego podejścia histerezowego~\cite{tatari2024mfbb}. Fundamentalna różnica polega na~sposobie generowania wartości zadanej prądu cewki~$i_{\mathrm{des}}$: o~ile w~podejściach klasycznych wartość ta~musi być wyznaczana przez~zewnętrzną pętlę napięciową (typowo regulator PI), wymagającą znajomości parametrów obiektu, o~tyle algorytm MF-BB generuje pożądane odniesienie prądu \emph{bezpośrednio} z~mierzonych sygnałów obwodowych ($u_{\mathrm{out}}$, $u_{\mathrm{ref}}$, $i_L$), bez~konieczności jawnego modelowania pełnej dynamiki przekształtnika ani~estymacji prądu obciążenia.
 
-Z~punktu widzenia inżynierskiego ten~zabieg eliminuje cztery~klasyczne źródła błędów modelowych obecne w~strukturach z~zewnętrzną pętlą PI: (i)~wrażliwość na~niedokładność wartości pasywnych $L$, $C$, (ii)~konieczność modelowania strat przewodzenia i~przełączania, (iii)~konieczność jawnej~estymacji prądu obciążenia (typowo realizowanej obserwatorem stanu lub~analogowym filtrem dolnoprzepustowym) oraz~(iv)~kompromisy w~doborze nastaw regulatora PI omawiane w~podrozdziale~\ref{subsec:pi}. Algorytm MF-BB osiąga ten~rezultat poprzez~włączenie do~prawa sterowania członu predykcyjnego, którego waga~$w_i$ jest~głównym parametrem strojącym -- regulator ekstrapoluje krótkoterminowy kierunek zmian napięcia wyjściowego i~na~tej~podstawie wyprzedzająco modyfikuje wartość zadaną prądu cewki, kompensując w~ten~sposób dynamikę fazy nieminimalnej (podrozdział~\ref{sec:nmp}) bez~potrzeby formalnej syntezy regulatora w~przestrzeni częstotliwości.
+W~bazowym algorytmie MF-BB wolnozmienna wartość zadana prądu cewki~$i_{\mathrm{des}}(k)$ jest~generowana poprzez~cyfrowy filtr dolnoprzepustowy I~rzędu:
+\begin{equation}
+    i_{\mathrm{des}}(k) = \alpha\,i_L(k) + \alpha\,i_L(k-1) + \beta\,i_{\mathrm{des}}(k-1),
+    \label{eq:mfbb-ides}
+\end{equation}
+którego parametry ($\alpha = 0{,}01$, $\beta = 0{,}98$ dla~częstotliwości próbkowania $f_s = 100$~kHz oraz częstotliwości odcięcia $f_c = 321$~Hz w~\cite{tatari2024mfbb}) pozwalają odfiltrować szybkie tętnienia łączeniowe i~uzyskać średni punkt pracy prądu dławika.
 
-Dodatkową cechą podnoszącą praktyczną przydatność MF-BB w~zastosowaniach mikrosieciowych jest~niski wymagany budżet obliczeniowy -- pojedynczy krok algorytmu sprowadza się do~kilku operacji arytmetycznych (różnica, mnożenie wagą predyktora, filtracja dolnoprzepustowa, porównanie z~progiem histerezy), co~pozwala na~implementację nawet na~najprostszych mikrokontrolerach 8-bitowych pracujących z~częstotliwością MHz. Stanowi to~istotną przewagę nad~omawianym wcześniej FS-MPC, którego budżet predykcyjny rośnie eksponencjalnie z~horyzontem $N_p$ (podrozdział~\ref{sec:fsmpc}).
+Decyzja o~stanie klucza opiera się na~liniowej powierzchni przełączającej $S(k)$, łączącej uchyb regulacji napięcia oraz uchyb prądowy:
+\begin{equation}
+    e_u(k) = u_{\mathrm{ref}}(k) - u_{\mathrm{out}}(k), \qquad e_i(k) = i_{\mathrm{des}}(k) - i_L(k),
+    \label{eq:mfbb-errors}
+\end{equation}
+\begin{equation}
+    S(k) = e_u(k) + w_i\,e_i(k),
+    \label{eq:mfbb-surface}
+\end{equation}
+gdzie $w_i > 0$ jest~bezwymiarową wagą członu prądowego. Dyskretne polecenie sterujące $s_{\mathrm{cmd}}(k)\in\{0,1\}$ wyznaczane jest~bezpośrednio przez~funkcję progową (komparator):
+\begin{equation}
+    s_{\mathrm{cmd}}(k) =
+    \begin{cases}
+        1, & \text{dla } S(k) \ge 0, \\
+        0, & \text{dla } S(k) < 0.
+    \end{cases}
+    \label{eq:mfbb-comparator}
+\end{equation}
 
-W~praktycznej implementacji prezentowanej w~niniejszej pracy (rozdział~\ref{ch:realizacja}), algorytm MF-BB wzbogacono dodatkowo o~mechanizm estymacji prądu obciążenia oraz~cyfrowy filtr dolnoprzepustowy w~ścieżce predyktora, których nastawy ($w_i$, $f_c$) podlegają automatycznemu strojeniu metodą metaheurystyczną PSO (rozdział~\ref{ch:ai}).
+Warto odnotować istotny szczegół formalno-matematyczny: w~oryginalnym druku artykułu~\cite{tatari2024mfbb} w~równaniu definiującym powierzchnię przełączającą omyłkowo wydrukowano moduł uchybu prądu $\lvert i_{\mathrm{des}} - i_L\rvert$. Dla~prawidłowej realizacji sterowania przekaźnikowego niezbędne jest~jednak zachowanie informacji o~kierunku błędu, stąd w~rzeczywistej implementacji stosuje się uchyb ze~znakiem~\eqref{eq:mfbb-errors} i~bezpośrednie porównanie z~zerem~\eqref{eq:mfbb-comparator}.
+
+Z~punktu widzenia inżynierskiego ten~zabieg eliminuje cztery~klasyczne źródła błędów modelowych obecne w~strukturach z~zewnętrzną pętlą PI: (i)~wrażliwość na~niedokładność wartości pasywnych $L$, $C$, (ii)~konieczność modelowania strat przewodzenia i~przełączania, (iii)~konieczność jawnej~estymacji prądu obciążenia oraz~(iv)~kompromisy w~doborze nastaw regulatora PI omawiane w~podrozdziale~\ref{subsec:pi}. Algorytm MF-BB osiąga ten~rezultat poprzez~włączenie do~prawa sterowania członu prądowego z~wagą~$w_i$, który~działa jako dynamiczny stabilizator i~kompensuje dynamikę fazy nieminimalnej (podrozdział~\ref{sec:nmp}) bez~potrzeby formalnej syntezy regulatora w~przestrzeni częstotliwości.
+
+W~literaturze przedmiotu równolegle analizowany jest~również wariant z~korektą modelową (ang.~\emph{model-based Bang-Bang} lub~\emph{compensated Bang-Bang})~\cite{tatari2025enhancedbb}. W~układach tych, celem kompensacji opóźnienia próbkowania cyfrowego ($z^{-1}$) oraz eliminacji uchybu ustalonego napięcia, wprowadza się predykcję prądu cewki o~krok w~przód $i_L(k+1)$ oraz modelowy człon korekcyjny $i_\Delta = \frac{T_s}{2L}(2V_{\mathrm{in}} - u_{\mathrm{out}})$. Mimo że~wariant ten~częściowo przywraca zależność od~parametrów fizycznych obiektu ($L, C$), to~rdzeń decyzyjny w~obu podejściach opiera się na~tożsamej dwuparametrowej powierzchni przełączającej sterowanej parą wag $(w_i, f_c)$, której optymalny dobór stanowi klucz do~minimalizacji tętnień prądu i~jest~celem automatycznego strojenia metodami sztucznej inteligencji.
+
+Dodatkową cechą podnoszącą praktyczną przydatność rodziny MF-BB w~zastosowaniach mikrosieciowych jest~niski wymagany budżet obliczeniowy -- pojedynczy krok algorytmu sprowadza się do~kilku operacji arytmetycznych (różnica, mnożenie wagą predyktora, filtracja dolnoprzepustowa, porównanie z~zerem), co~pozwala na~implementację nawet na~najprostszych mikrokontrolerach pracujących z~taktowaniem rzędu kilku megaherców. Stanowi to~istotną przewagę nad~omawianym wcześniej FS-MPC, którego budżet predykcyjny rośnie eksponencjalnie z~horyzontem $N_p$ (podrozdział~\ref{sec:fsmpc}).
+
+W~praktycznej implementacji prezentowanej w~niniejszej pracy (rozdział~\ref{ch:realizacja}), algorytm MF-BB zaimplementowano w~spójnej strukturze programistycznej umożliwiającej badanie obu wariantów, a~jego parametry ($w_i$, $f_c$) poddano automatycznemu strojeniu metodą metaheurystyczną PSO z~wykorzystaniem kryteriów jakości regulacji uwzględniających tętnienia prądu (rozdział~\ref{ch:ai}).
 
 \section{Podsumowanie przeglądu}
 \label{sec:przeglad-podsumowanie}
