@@ -1,0 +1,103 @@
+\chapter{Badania symulacyjne i~weryfikacja Bliźniaka Cyfrowego}
+\label{ch:badania}
+
+Niniejszy rozdział prezentuje przebieg i~wyniki badań symulacyjnych opracowanego Bliźniaka Cyfrowego przekształtnika podwyższającego DC-DC. Przedstawiono w~nim metodykę eksperymentów numerycznych, procedurę empirycznej walidacji modelu względem komercyjnego środowiska PSIM, a~także wyniki testów obciążeniowych (\emph{stress-testów}) badających zachowanie układu w~warunkach skrajnie zredukowanej pojemności kondensatora wyjściowego oraz gwałtownych zaburzeń obciążenia.
+
+\section{Metodyka eksperymentów numerycznych}
+\label{sec:metodyka}
+
+Zgodnie z~założeniami architektonicznymi przyjętymi w~rozdziale~\ref{sec:zalozenia}, weryfikacja poprawności oprogramowania opiera się na metodologii bezpośredniego dowodu numerycznego. W~celu wykluczenia subiektywnych interpretacji zastosowano dwie niezależne procedury pomiarowe:
+\begin{enumerate}
+    \item \textbf{Bezpośrednie nakładanie trajektorii czasowych (ang. \emph{signal overlay}):} Przebiegi napięcia wyjściowego $u_{\mathrm{dc}}(t)$, prądu dławika $i_L(t)$ oraz sygnałów sterujących $s(t)$ wygenerowane przez solwer Pythona są bezpośrednio porównywane z~dyskretnymi danymi wyeksportowanymi z~symulatora PSIM w~identycznym horyzoncie czasowym i~przy tożsamych warunkach brzegowych.
+    \item \textbf{Ilościowa ocena zgodności za pomocą metryk błędu:} Zgodność numeryczną kwantyfikuje się za pomocą maksymalnego błędu bezwzględnego (ang. \emph{Peak Error}, $\max|\Delta|$), średniego błędu bezwzględnego (MAE) oraz odchyłek względnych kluczowych wielkości makroskopowych (wartości średniej, tętnień międzyszczytowych p-p oraz współczynnika wypełnienia impulsów $D$).
+\end{enumerate}
+
+Wszystkie symulacje weryfikacyjne zrealizowano przy dyskretyzacji czasowej odpowiadającej rzeczywistym ograniczeniom systemów wbudowanych: krok całkowania równań fizyki wynosił $\Delta t = 0{,}5~\mu\mathrm{s}$ ($f_{\mathrm{sim}} = 2~\mathrm{MHz}$), a~częstotliwość wywołań pętli sterownika cyfrowego $T_{s,\mathrm{ctrl}} = 10~\mu\mathrm{s}$ ($f_s = 100~\mathrm{kHz}$).
+
+\section{Walidacja przebiegów względem PSIM}
+\label{sec:walidacja-psim}
+
+\subsection{Otwarta pętla -- weryfikacja jądra fizycznego}
+\label{subsec:val-openloop}
+
+Pierwszym etapem procedury weryfikacyjnej było sprawdzenie poprawności numerycznej samego równania różniczkowego przekształtnika podwyższającego (bez udziału pętli sprzężenia zwrotnego). W~układzie wymuszono stały współczynnik wypełnienia impulsów $D = 0{,}50$ przy częstotliwości kluczowania $f_{\mathrm{sw}} = 100~\mathrm{kHz}$ i~nominalnym obciążeniu $R_{\mathrm{load}} = 47{,}619~\Omega$. 
+
+Porównanie przebiegów wygenerowanych przez skrypt \texttt{demo.py} z~danymi referencyjnymi z~pliku \texttt{psim\_wyniki.csv} wykazało pełną zgodność jakościową i~ilościową. Przebieg napięcia kondensatora oraz prądu dławika w~fazie rozruchu i~w~stanie ustalonym idealnie pokrywa się z~trajektorią PSIM, a~średni błąd napięcia w~stanie ustalonym nie przekracza $0{,}05\,\%$. Potwierdza to poprawność zaimplementowanej w~klasie \texttt{Converter} metody całkowania Eulera ze stałym krokiem czasowym.
+
+\subsection{Zamknięta pętla ze sterownikiem Bang-Bang}
+\label{subsec:val-closedloop}
+
+Weryfikację kompletnego układu z~zamkniętą pętlą regulacji przeprowadzono dla struktury MF-BB z~estymacją prądu obciążenia na horyzoncie $T_{\mathrm{end}} = 100~\mathrm{ms}$ ($2\cdot 10^5$ kroków fizyki). Model w~programie PSIM oraz Bliźniak Cyfrowy w~języku Python zostały skonfigurowane dla identycznych parametrów: $V_{\mathrm{in}} = 100~\mathrm{V}$, $L = 0{,}75~\mathrm{mH}$, $R_L = 0{,}05~\Omega$, $C = 200~\mu\mathrm{F}$, $R_{\mathrm{load}} = 47{,}619~\Omega$, $u_{\mathrm{ref}} = 240~\mathrm{V}$.
+
+Zestawienie wskaźników statystycznych wyznaczonych w~stanie ustalonym ($t \in [80;\, 100]~\mathrm{ms}$) zestawiono w~tabeli~\ref{tab:val-summary-oop}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Porównanie wskaźników stanu ustalonego ($t \in [80;\, 100]~\mathrm{ms}$) pomiędzy symulatorem PSIM a~Bliźniakiem Cyfrowym Python OOP.}
+    \label{tab:val-summary-oop}
+    \begin{tabular}{lrrrr}
+        \toprule
+        \textbf{Wskaźnik} & \textbf{PSIM} & \textbf{Python OOP} & \textbf{Odchylenie $\Delta$} & \textbf{Błąd względny} \\
+        \midrule
+        Średnie napięcie wyjściowe $u_{\mathrm{dc}}$ [V] & 239{,}606 & 239{,}493 & $-0{,}113$ & $-0{,}05\,\%$ \\
+        Tętnienia napięcia p-p $\Delta u_{\mathrm{dc}}$ [V] & 1{,}055 & 1{,}086 & $+0{,}031$ & $+2{,}98\,\%$ \\
+        Odchylenie stand. napięcia $\sigma(u_{\mathrm{dc}})$ [V] & 0{,}284 & 0{,}273 & $-0{,}011$ & $-3{,}95\,\%$ \\
+        Średni prąd dławika $\bar{i}_L$ [A] & 12{,}026 & 12{,}072 & $+0{,}046$ & $+0{,}38\,\%$ \\
+        Maksymalny prąd dławika $i_{L,\max}$ [A] & 14{,}614 & 14{,}693 & $+0{,}079$ & $+0{,}54\,\%$ \\
+        Średni współczynnik wypełnienia $D$ & 0{,}5852 & 0{,}5850 & $-0{,}0002$ & $-0{,}04\,\%$ \\
+        Średni prąd zadany $\bar{i}_{\mathrm{des}}$ [A] & 11{,}965 & 12{,}024 & $+0{,}058$ & $+0{,}49\,\%$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Odchyłka średniego napięcia wyjściowego wynosi zaledwie $-0{,}113~\mathrm{V}$ (błąd względny $0{,}05\,\%$, czyli pół promila), a~średni prąd dławika różni się o~$0{,}046~\mathrm{A}$ ($0{,}38\,\%$). Globalny współczynnik wypełnienia impulsów $D$ jest identyczny z~dokładnością do czterech miejsc po przecinku. Potwierdza to pełną równoważność behawioralną opracowanego oprogramowania względem platformy komercyjnej.
+
+\section{Stress-testy układu i~granice stabilności}
+\label{sec:stress}
+
+\subsection{Wpływ drastycznej redukcji pojemności kondensatora filtra}
+\label{subsec:cap}
+
+Jednym z~głównych wyzwań we współczesnym projektowaniu przekształtników energoelektronicznych jest dążenie do miniaturyzacji gabarytów i~redukcji kosztów poprzez eliminację wielkich kondensatorów elektrolitycznych na rzecz mniejszych pojemności foliowych lub ceramicznych. W~ramach badań sprawdzono, jak zachowuje się cyfrowy sterownik przy stopniowej redukcji pojemności $C$ od wartości znamionowej $1500~\mu\mathrm{F}$ aż do skrajnie małej wartości $50~\mu\mathrm{F}$ (redukcja 30-krotna).
+
+Wyniki symulacji w~stanie ustalonym pod obciążeniem $1{,}2~\mathrm{kW}$ zebrano w~tabeli~\ref{tab:c-sweep-results}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Wpływ pojemności kondensatora wyjściowego $C$ na parametry stanu ustalonego ($1{,}2~\mathrm{kW}$, $u_{\mathrm{ref}} = 240~\mathrm{V}$).}
+    \label{tab:c-sweep-results}
+    \begin{tabular}{rrrrr}
+        \toprule
+        $C$~[$\mu\mathrm{F}$] & Średnie $u_{\mathrm{dc}}$~[V] & Tętnienia $\Delta u_{\mathrm{dc},\mathrm{pp}}$~[V] & Średni prąd $\bar{i}_L$~[A] & Tętnienia $\Delta i_{L,\mathrm{pp}}$~[A] \\
+        \midrule
+        1500 & 239{,}83 & 0{,}15 & 12{,}09 & 5{,}85 \\
+        500  & 239{,}86 & 0{,}44 & 12{,}09 & 5{,}87 \\
+        \textbf{200}  & \textbf{239{,}92} & \textbf{1{,}09} & \textbf{12{,}11} & \textbf{5{,}96} \\
+        100  & 238{,}84 & 11{,}32 & 12{,}05 & 25{,}34 \\
+        50   & 233{,}82 & 30{,}33 & 11{,}81 & 30{,}38 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Odpowiedź czasową oraz wykresy tętnień w~funkcji pojemności przedstawiono na rysunku~\ref{fig:stress-c}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/stress_test_pojemnosci_c.png}
+    \caption{Badanie zachowania przekształtnika przy redukcji pojemności wyjściowej $C$: (po lewej) przebiegi czasowe napięcia i~prądu w~stanie ustalonym; (po prawej) zależność tętnień napięcia $\Delta u_{\mathrm{dc},\mathrm{pp}}$ oraz tętnień prądu $\Delta i_{L,\mathrm{pp}}$ od pojemności $C$.}
+    \label{fig:stress-c}
+\end{figure}
+
+Dla pojemności $C \ge 200~\mu\mathrm{F}$ układ zachowuje pełną stabilność, a~tętnienia prądu dławika pozostają na minimalnym poziomie sprzętowym ($\approx 5{,}85$--$5{,}96~\mathrm{A}$). Dla badanej w~pracy pojemności $C = 200~\mu\mathrm{F}$ tętnienia napięcia wynoszą zaledwie $1{,}09~\mathrm{V}$ ($0{,}45\,\%$), co stanowi wynik znakomity. Dopiero zejście poniżej $100~\mu\mathrm{F}$ przy taktowaniu $100~\mathrm{kHz}$ powoduje gwałtowny wzrost tętnień wskutek ograniczeń częstotliwości próbkowania sterownika.
+
+\subsection{Odpowiedź dynamiczna na skoki obciążenia i~referencji}
+\label{subsec:transient}
+
+Odporność dynamiczną układu zweryfikowano w~horyzoncie $0{,}30~\mathrm{s}$ w~scenariuszu obejmującym skokowe zrzucenia obciążenia do stanu jałowego ($47{,}619~\Omega \to 10~\mathrm{M}\Omega$ w~$t=50~\mathrm{ms}$ i~$t=200~\mathrm{ms}$), ponowne dołączenia odbiornika $1{,}2~\mathrm{kW}$ ($t=100~\mathrm{ms}$ i~$t=250~\mathrm{ms}$) oraz skok wartości zadanej napięcia $240 \to 160~\mathrm{V}$ ($t=150~\mathrm{ms}$).
+
+We wszystkich stanach przejściowych układ zachował stabilność:
+\begin{itemize}
+    \item Przy nagłym załączeniu pełnego obciążenia w~$t=100~\mathrm{ms}$ przeregulowanie napięcia wyniosło zaledwie $\Delta U_{\mathrm{overshoot}} = 0{,}51~\mathrm{V}$ ($0{,}21\,\%$ wartości zadanej).
+    \item W~całym horyzoncie $0{,}30~\mathrm{s}$ prąd dławika nie przekroczył poziomu $22{,}63~\mathrm{A}$, co potwierdza skuteczne działanie ogranicznika nadprądowego ($I_{\max} = \pm 20~\mathrm{A}$).
+    \item Zidentyfikowano jednak kluczowy problem dynamiczny: przy skoku referencji w~dół $240 \to 160~\mathrm{V}$ w~klasycznym sterowniku bez członu trendu występuje głęboki zapad napięcia poniżej zadanej wartości ($\sim 7$--$8~\mathrm{V}$), co motywuje konieczność zastosowania zautomatyzowanej optymalizacji metaheurystycznej i~rozbudowy algorytmu sterowania w~rozdziale~\ref{ch:ai}.
+\end{itemize}

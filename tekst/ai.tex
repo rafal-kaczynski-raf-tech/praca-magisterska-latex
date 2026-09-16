@@ -532,6 +532,39 @@ Zbiorczą wizualizację badania wrażliwości przedstawiono na rysunku~\ref{fig:
     \label{fig:badanie-wrazliwosci}
 \end{figure}
 
+\subsection{Porównanie strojenia AI (PSO) ze strojeniem bazowym}
+\label{subsec:ai-vs-manual}
+
+W~celu wykazania praktycznej wartości zautomatyzowanego strojenia metaheurystycznego porównano jakość pracy układu nastrojonego przez PSO ($w_i^* = 0{,}40$, $w_u^* = 15{,}0$, $f_c = 321{,}0~\mathrm{Hz}$) z~nastawami bazowymi bez członu trendu napięcia ($w_i = 0{,}20$, $w_u = 0$, $f_c = 321{,}0~\mathrm{Hz}$). Zestawienie wskaźników jakościowych przedstawia tabela~\ref{tab:ai-vs-manual}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Porównanie wskaźników jakościowych dla nastaw bazowych oraz nastaw wyznaczonych procedurą optymalizacji dwutorowej.}
+    \label{tab:ai-vs-manual}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Wskaźnik jakości} & \textbf{Nastawy bazowe} & \textbf{Strojenie AI / PSO} & \textbf{Zysk / Poprawa} \\
+        \midrule
+        Zapad napięcia po skoku $240 \to 160~\mathrm{V}$ & 6{,}56~V & \textbf{0{,}26~V} & \textbf{Redukcja o 96,0\,\%} \\
+        Przeregulowanie przy załączeniu $1{,}2~\mathrm{kW}$ & 1{,}79~V & \textbf{0{,}51~V} & \textbf{Redukcja o 71,5\,\%} \\
+        Tętnienia prądu dławika $\Delta i_{L,\mathrm{pp}}$ ($1{,}2~\mathrm{kW}$) & 22{,}65~A & \textbf{6{,}65~A} & \textbf{Redukcja o 70,6\,\%} \\
+        Stabilność pętli prądowej & oscylacje podharm. & \textbf{pełna stabilność} & eliminacja drgań \\
+        Błąd napięcia w~stanie ustalonym $e_u$ & $-0{,}28$~V & \textbf{$-0{,}07$~V} & 4-krotny wzrost precyzji \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Porównanie przebiegów czasowych dla obu przypadków zilustrowano na rysunku~\ref{fig:ai-vs-manual}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/porownanie_ai_vs_manual.png}
+    \caption{Porównanie odpowiedzi czasowej przekształtnika: nastawy bazowe (linia czerwona) vs. nastawy nastrojone algorytmem PSO (linia niebieska). Widoczna całkowita eliminacja zapadu napięcia oraz drastyczna redukcja tętnień prądu w~stanie ustalonym.}
+    \label{fig:ai-vs-manual}
+\end{figure}
+
+Optymalizacja metaheurystyczna przyniosła radykalną poprawę parametrów regulacji: zapad napięcia został zredukowany z~$6{,}56~\mathrm{V}$ do zaledwie $0{,}26~\mathrm{V}$ (poprawa o~$96{,}0\,\%$), a~tętnienia prądu dławika w~stanie ustalonym spadły z~$22{,}65~\mathrm{A}$ do $6{,}65~\mathrm{A}$ (poprawa o~$70{,}6\,\%$) dzięki wyprowadzeniu punktu pracy poza rejon oscylacji podharmonicznych ($w_i > 0{,}25$).
+
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
 
