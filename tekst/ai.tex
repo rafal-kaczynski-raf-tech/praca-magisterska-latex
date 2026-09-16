@@ -27,14 +27,12 @@ W~rodzinie metaheurystyk rozważano trzy najpopularniejsze warianty: algorytmy g
 \section{Algorytm Optymalizacji Rojem Cząstek (PSO)}
 \label{sec:pso}
 
-\subsection{Podstawy matematyczne}
+\subsection{Podstawy matematyczne i~implementacja w~PySwarms}
 \label{subsec:pso-math}
 
-Algorytm PSO został zaproponowany przez Kennedy'ego i~Eberharta w~1995~roku jako matematyczna abstrakcja zachowań społecznych obserwowanych w~stadach ptaków oraz ławicach ryb. Populacja $N$ cząstek przemieszcza się w~$d$-wymiarowej przestrzeni przeszukiwań, przy czym każda cząstka $i\in\{1,\dots,N\}$ jest w~iteracji $k$ jednoznacznie opisana parą wektorów: pozycją $\mathbf{x}_i^{(k)}\in\mathbb{R}^d$ (kandydat na~rozwiązanie) oraz prędkością $\mathbf{v}_i^{(k)}\in\mathbb{R}^d$ (kierunek i~tempo eksploracji).
+Algorytm optymalizacji rojem cząstek (ang.~\emph{Particle Swarm Optimization}, PSO) został zaproponowany przez Kennedy'ego i~Eberharta w~1995~roku~\cite{kennedy1995pso} jako stochastyczna metoda poszukiwania ekstremum w~wielowymiarowych przestrzeniach ciągłych, inspirowana zachowaniami społecznymi w~stadach ptaków oraz ławicach ryb. W~niniejszej pracy do~realizacji obliczeń optymalizacyjnych wykorzystano oficjalną bibliotekę naukową \texttt{PySwarms}~\cite{miranda2018pyswarms} (\texttt{pyswarms.single.GlobalBestPSO}), stanowiącą uznany w~literaturze akademickiej standard implementacyjny algorytmu roju w~języku Python.
 
-% TODO cytat: Kennedy J., Eberhart R. "Particle Swarm Optimization", Proc. IEEE ICNN 1995.
-
-W~każdej iteracji każda cząstka pamięta dwie najlepsze pozycje: własną historyczną $\mathbf{p}_i$ (\emph{personal best}) oraz najlepszą pozycję odkrytą przez całą populację $\mathbf{g}$ (\emph{global best}). Aktualizacja prędkości i~pozycji odbywa się zgodnie z~kanonicznymi wzorami:
+W~algorytmie populacja $N$ cząstek przemieszcza się w~$d$-wymiarowej przestrzeni poszukiwań. Każda cząstka $i\in\{1,\dots,N\}$ w~kroku iteracyjnym $k$ jest opisana wektorem położenia $\mathbf{x}_i^{(k)}\in\mathbb{R}^d$ oraz wektorem prędkości $\mathbf{v}_i^{(k)}\in\mathbb{R}^d$. Cząstki wymieniają informację o~najlepszych dotychczasowych punktach: każda pamięta swoje najlepsze położenie indywidualne $\mathbf{p}_i$ (\emph{personal best}), a~cały rój utrzymuje pozycję najlepszą w~skali globalnej $\mathbf{g}$ (\emph{global best}). Zgodnie z~kanonicznym sformułowaniem biblioteki \texttt{PySwarms}, aktualizacja prędkości oraz położenia cząstek w~każdej iteracji przebiega według równań:
 \begin{equation}
     \mathbf{v}_i^{(k+1)} = w^{(k)}\,\mathbf{v}_i^{(k)}
         + c_1\,r_1\odot\bigl(\mathbf{p}_i - \mathbf{x}_i^{(k)}\bigr)
@@ -45,21 +43,16 @@ W~każdej iteracji każda cząstka pamięta dwie najlepsze pozycje: własną his
     \mathbf{x}_i^{(k+1)} = \mathbf{x}_i^{(k)} + \mathbf{v}_i^{(k+1)},
     \label{eq:pso-position}
 \end{equation}
-gdzie $r_1, r_2\sim\mathcal{U}([0,1]^d)$ są wektorami liczb losowych próbkowanymi niezależnie w~każdej iteracji, $\odot$ oznacza iloczyn Hadamarda (po~współrzędnych), $c_1$ jest współczynnikiem uczenia kognitywnego (przyciąganie do~własnego rekordu), $c_2$~--~socjalnego (przyciąganie do~rekordu roju), a~$w^{(k)}$ to~waga bezwładności sterująca przejściem od~globalnej eksploracji do~lokalnej eksploatacji.
+gdzie $r_1, r_2\sim\mathcal{U}([0,1]^d)$ są wektorami liczb losowych o~rozkładzie jednostajnym próbkowanymi niezależnie w~każdej iteracji, symbol $\odot$ oznacza iloczyn po~współrzędnych (Hadamarda), $c_1$ jest współczynnikiem przyciągania do~rekordu własnego (składnik kognitywny), $c_2$~--~współczynnikiem przyciągania do~rekordu roju (składnik społeczny), natomiast $w^{(k)}$ jest wagą bezwładności (ang.~\emph{inertia weight}).
 
-Aby uniknąć przedwczesnej zbieżności do~minimum lokalnego, zastosowano liniową dekrementację wagi bezwładności zaproponowaną przez Shi i~Eberharta:
+Dla zachowania właściwego balansu pomiędzy globalną eksploracją przestrzeni na~początku procesu a~dokładną lokalną eksploatacją w~końcowych iteracjach, w~konfiguracji biblioteki \texttt{PySwarms} włączono strategię liniowej dekrementacji wagi bezwładności (\texttt{OptionsHandler.lin\_variation}) zgodnie z~metodyką Shi i~Eberharta~\cite{shi1998pso}:
 \begin{equation}
     w^{(k)} = w_{\max} - \frac{k}{K_{\max}}\,(w_{\max} - w_{\min}),
     \label{eq:pso-inertia}
 \end{equation}
-gdzie $K_{\max}$ jest~zadaną maksymalną liczbą iteracji. Wysoka wartość $w_{\max}$ na~początku optymalizacji wymusza szerokie przeszukiwanie przestrzeni, natomiast malejąca $w_{\min}$ w~końcowych iteracjach pozwala cząstkom skupić się wokół znalezionego ekstremum.
+gdzie $K_{\max}$ oznacza całkowitą liczbę iteracji optymalizatora.
 
-% TODO cytat: Shi Y., Eberhart R. "A Modified Particle Swarm Optimizer", Proc. IEEE CEC 1998.
-
-Dodatkowo, w~celu zapewnienia stabilności numerycznej algorytmu, każdą składową prędkości ogranicza się symetrycznie wartością $V_{\max,j} = V_{\text{frac}}\,(x_{\max,j}-x_{\min,j})$, gdzie $V_{\text{frac}}\in(0,1)$ jest~globalnym współczynnikiem, a~$[x_{\min,j}, x_{\max,j}]$ są dolną i~górną granicą $j$-tego wymiaru. Pozycje przekraczające granice są przycinane do~hiperkostki dopuszczalnej, co~jest~równoważne zastosowaniu prostej kary barierowej.
-
-% TODO cytat: Clerc M., Kennedy J. "The Particle Swarm -- Explosion, Stability, and Convergence",
-% IEEE Trans. Evol. Comput. 2002 (analiza stabilnosci PSO).
+Obsługę warunków brzegowych w~przestrzeni poszukiwań zrealizowano z~wykorzystaniem modułu odbicia lustrzanego \texttt{BoundaryHandler(strategy="reflective")}. W~przypadku przekroczenia dopuszczalnej granicy dziedziny współrzędna cząstki jest odbijana do~wnętrza obszaru dopuszczalnego, co zapobiega ucieczce roju i~utracie różnorodności populacji.
 
 \subsection{Hiperparametry i~konfiguracja roju}
 \label{subsec:pso-config}
@@ -68,20 +61,22 @@ W~niniejszej pracy przyjęto klasyczne wartości hiperparametrów PSO, sprawdzon
 
 \begin{table}[h!]
     \centering
-    \caption{Konfiguracja algorytmu PSO przyjęta w~eksperymentach.}
+    \caption{Konfiguracja algorytmu PSO przyjęta w~eksperymentach (biblioteka \texttt{PySwarms}).}
     \label{tab:pso-hparams}
     \begin{tabular}{lcl}
         \toprule
-        \textbf{Hiperparametr} & \textbf{Wartość} & \textbf{Uzasadnienie} \\
+        \textbf{Hiperparametr / Opcja} & \textbf{Wartość} & \textbf{Uzasadnienie} \\
         \midrule
-        Liczba cząstek $N$           & 20        & kompromis: koszt vs. pokrycie 2D \\
-        Maks. liczba iteracji $K_{\max}$ & 40    & ok.\ 820 ewaluacji łącznie \\
+        Środowisko obliczeniowe      & \texttt{PySwarms 1.3} & zweryfikowana biblioteka naukowa \\
+        Topologia roju               & \texttt{Star} (globalna) & klasyczne $g_{\mathrm{best}}$ PSO \\
+        Strategia brzegowa           & \texttt{reflective}  & odbicie lustrzane od granic \\
+        Liczba cząstek $N$           & 16--20    & kompromis: koszt vs. pokrycie 2D \\
+        Maks. liczba iteracji $K_{\max}$ & 25--40 & zbieżność do stabilnego plateau \\
         Waga bezwładności $w_{\max}$ & 0{,}9     & szeroka eksploracja na~starcie \\
         Waga bezwładności $w_{\min}$ & 0{,}4     & lokalna eksploatacja na~końcu \\
-        Współczynnik kognitywny $c_1$ & 2{,}05   & kanoniczna wartość Clerca \\
-        Współczynnik socjalny $c_2$  & 2{,}05    & kanoniczna wartość Clerca \\
-        Limit prędkości $V_{\text{frac}}$ & 0{,}5 & 50\% szerokości wymiaru \\
-        Ziarno generatora $\texttt{seed}$ & 42   & powtarzalność wyników \\
+        Współczynnik kognitywny $c_1$ & 1{,}50--2{,}05 & standardowa waga pamięci własnej \\
+        Współczynnik socjalny $c_2$  & 1{,}50--2{,}05 & standardowa waga pamięci roju \\
+        Ziarno generatora $\texttt{seed}$ & 42   & pełna powtarzalność eksperymentu \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -457,18 +452,18 @@ Dla zbadania elastyczności pętli prądowej przeprowadzono serię optymalizacji
 
 \begin{table}[h!]
     \centering
-    \caption{Wyniki optymalizacji 2D PSO w Kroku 1 w zależności od wagi błędu prądu $\lambda_i$ (okno $1{,}2~\mathrm{kW}$, $t \in [120;\, 150]~\mathrm{ms}$).}
+    \caption{Wyniki optymalizacji 2D PSO (biblioteka \texttt{PySwarms}) w Kroku 1 w zależności od wagi błędu prądu $\lambda_i$ (okno $1{,}2~\mathrm{kW}$, $t \in [120;\, 150]~\mathrm{ms}$).}
     \label{tab:wrazliwosc-krok1}
     \begin{tabular}{rrrrrrr}
         \toprule
         $\lambda_i$ & $w_i^*$ & $f_{c,i}^*$~[Hz] & $\mathrm{IAE}_u$~[V] & $\mathrm{IAE}_i$~[A] & $\Delta i_{L,\mathrm{pp}}$~[A] & $J_1^*$ \\
         \midrule
-        0{,}10 & 0{,}3157 & 1000{,}0 & 0{,}2377 & 1{,}275 & 6{,}10 & 0{,}3653 \\
-        0{,}25 & 0{,}3127 & 1000{,}0 & 0{,}2382 & 1{,}274 & 6{,}13 & 0{,}5569 \\
-        0{,}50 & 0{,}3557 & \phantom{0}679{,}7 & 0{,}2436 & 1{,}253 & 5{,}81 & 0{,}8701 \\
-        1{,}00 & 0{,}4427 & \phantom{0}429{,}5 & 0{,}2578 & 1{,}236 & 5{,}84 & 1{,}4942 \\
-        2{,}00 & 0{,}4994 & \phantom{0}289{,}2 & 0{,}2689 & 1{,}227 & 5{,}83 & 2{,}7235 \\
-        5{,}00 & 0{,}5505 & \phantom{0}178{,}2 & 0{,}2852 & 1{,}221 & 5{,}84 & 6{,}3896 \\
+        0{,}10 & 0{,}3262 & 929{,}2 & 0{,}2401 & 1{,}272 & 6{,}05 & 0{,}3672 \\
+        0{,}25 & 0{,}3579 & 632{,}0 & 0{,}2436 & 1{,}250 & 5{,}81 & 0{,}5562 \\
+        0{,}50 & 0{,}3887 & 606{,}8 & 0{,}2492 & 1{,}249 & 5{,}92 & 0{,}8737 \\
+        1{,}00 & 0{,}4046 & 655{,}6 & 0{,}2490 & 1{,}251 & 5{,}93 & 1{,}5003 \\
+        2{,}00 & 0{,}5470 & 223{,}2 & 0{,}2852 & 1{,}223 & 5{,}84 & 2{,}7320 \\
+        5{,}00 & 0{,}5457 & 239{,}7 & 0{,}2851 & 1{,}225 & 5{,}84 & 6{,}4078 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -476,29 +471,29 @@ Dla zbadania elastyczności pętli prądowej przeprowadzono serię optymalizacji
 Wraz ze wzrostem wagi $\lambda_i$ (rosnący priorytet tłumienia tętnień prądu) optymalizator płynnie zwiększa wagę $w_i^*$ z $0{,}3157$ do $0{,}5505$, jednocześnie zawężając pasmo filtru $f_{c,i}^*$ z $1000~\mathrm{Hz}$ do $178~\mathrm{Hz}$. Tętnienia prądu dławika stabilizują się na fizycznym poziomie $\Delta i_{L,\mathrm{pp}} \approx 5{,}83~\mathrm{A}$.
 
 \paragraph{2. Krok 2 -- Wrażliwość na wagę kary za zapad ($w_{\mathrm{cross}}$):}
-Dla wyznaczonej w Kroku 1 pary nominalnej ($w_i^* = 0{,}4427$, $f_{c,i}^* = 429{,}5~\mathrm{Hz}$) zbadano odpowiedź algorytmu na wagę kary $w_{\mathrm{cross}} \in [0{,}00;\, 5{,}00]$. Wyniki zestawiono w tabeli~\ref{tab:wrazliwosc-krok2}.
+Dla wyznaczonej w Kroku 1 pary nominalnej ($w_i^* = 0{,}4046$, $f_{c,i}^* = 655{,}6~\mathrm{Hz}$) zbadano odpowiedź algorytmu na wagę kary $w_{\mathrm{cross}} \in [0{,}00;\, 5{,}00]$. Wyniki zestawiono w tabeli~\ref{tab:wrazliwosc-krok2}.
 
 \begin{table}[h!]
     \centering
-    \caption{Wyniki optymalizacji w Kroku 2 w zależności od wagi kary za zapad $w_{\mathrm{cross}}$ (skok $240 \to 160~\mathrm{V}$, $f_c = 321{,}0~\mathrm{Hz}$).}
+    \caption{Wyniki optymalizacji w Kroku 2 w zależności od wagi kary za zapad $w_{\mathrm{cross}}$ (skok $240 \to 160~\mathrm{V}$, nastawy z Kroku 1: $w_i^* = 0{,}4046$, $f_{c,i}^* = 655{,}6~\mathrm{Hz}$).}
     \label{tab:wrazliwosc-krok2}
     \begin{tabular}{rrrrr}
         \toprule
         $w_{\mathrm{cross}}$ & $w_u^*$ & $\Delta U_{\mathrm{undershoot}}$~[V] & $\mathrm{ISE}_{\mathrm{trans}}$ & $J_2^*$ \\
         \midrule
-        0{,}00 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7817 \\
-        0{,}02 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7826 \\
-        0{,}05 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7839 \\
-        0{,}10 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7861 \\
-        0{,}20 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7905 \\
-        0{,}50 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}8037 \\
-        1{,}00 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}8256 \\
-        5{,}00 & 20{,}0 & 0{,}18 & 2{,}8220 & 2{,}9895 \\
+        0{,}00 & 11{,}0 & 1{,}16 & 2{,}7421 & 2{,}7421 \\
+        0{,}02 & 12{,}0 & 0{,}59 & 2{,}7515 & 2{,}7585 \\
+        0{,}05 & 18{,}5 & 0{,}25 & 2{,}7607 & 2{,}7638 \\
+        0{,}10 & 18{,}5 & 0{,}25 & 2{,}7607 & 2{,}7669 \\
+        0{,}20 & 18{,}5 & 0{,}25 & 2{,}7607 & 2{,}7731 \\
+        0{,}50 & 18{,}5 & 0{,}25 & 2{,}7607 & 2{,}7918 \\
+        1{,}00 & 18{,}5 & 0{,}25 & 2{,}7607 & 2{,}8230 \\
+        5{,}00 & 21{,}0 & 0{,}22 & 2{,}7794 & 3{,}0164 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-W zakresie $w_{\mathrm{cross}} \in [0{,}00;\, 1{,}00]$ optymalizator zwraca stałą wartość $w_u^* = 16{,}0$ z zapadem $0{,}21~\mathrm{V}$. Fakt, że nawet przy $w_{\mathrm{cross}} = 0$ samo kryterium ISE wskazuje $w_u^* = 16{,}0$, wynika z fizyki obiektu: mniejsze $w_u$ zwiększa zapad, natomiast większe $w_u$ powoduje odbicie napięcia w górę powyżej $160~\mathrm{V}$, co w obu przypadkach zwiększa pole całki kwadratu błędu.
+W zakresie wag $w_{\mathrm{cross}} \in [0{,}05;\, 1{,}00]$ optymalizator zwraca w pełni stabilną wartość $w_u^* = 18{,}5$ z zapadem $0{,}25~\mathrm{V}$. Wartość $w_u^* = 18{,}5$ zapewnia równowagę między minimalizacją całki kwadratu błędu w transjencie a redukcją ugięcia napięcia bez generowania niepożądanego odbicia powyżej $160~\mathrm{V}$.
 
 \paragraph{3. Sprzężenie międzyetapowe -- Wpływ wyników Kroku 1 na Krok 2:}
 W celu weryfikacji sprzężenia pomiędzy kolejnymi krokami procedury, wyznaczone w Kroku 1 pary $(w_i^*, f_{c,i}^*)$ dla poszczególnych wag $\lambda_i$ przekazano jako parametry wejściowe do optymalizacji w Kroku 2 (przy nominalnym $w_{\mathrm{cross}} = 0{,}10$). Wyniki zestawiono w tabeli~\ref{tab:wrazliwosc-sprzezenie}.
@@ -511,12 +506,12 @@ W celu weryfikacji sprzężenia pomiędzy kolejnymi krokami procedury, wyznaczon
         \toprule
         $\lambda_i$ (Krok 1) & $w_i^*$ (Krok 1) & $f_{c,i}^*$~[Hz] & $w_u^*$ (Krok 2) & $\Delta U_{\mathrm{undershoot}}$~[V] & $J_2^*$ \\
         \midrule
-        0{,}10 & 0{,}3157 & 1000{,}0 & 22{,}0 & 0{,}26 & 2{,}7710 \\
-        0{,}25 & 0{,}3127 & 1000{,}0 & 21{,}0 & 0{,}27 & 2{,}6748 \\
-        0{,}50 & 0{,}3557 & \phantom{0}679{,}7 & 16{,}5 & 0{,}24 & 2{,}8156 \\
-        1{,}00 & 0{,}4427 & \phantom{0}429{,}5 & 16{,}0 & 0{,}21 & 2{,}7861 \\
-        2{,}00 & 0{,}4994 & \phantom{0}289{,}2 & 22{,}0 & 0{,}24 & 2{,}7668 \\
-        5{,}00 & 0{,}5505 & \phantom{0}178{,}2 & 22{,}5 & 1{,}00 & 2{,}9062 \\
+        0{,}10 & 0{,}3262 & 929{,}2 & 24{,}0 & 0{,}25 & 2{,}7062 \\
+        0{,}25 & 0{,}3579 & 632{,}0 & 13{,}0 & 0{,}24 & 2{,}8144 \\
+        0{,}50 & 0{,}3887 & 606{,}8 & 17{,}0 & 0{,}26 & 2{,}7668 \\
+        1{,}00 & 0{,}4046 & 655{,}6 & 18{,}5 & 0{,}25 & 2{,}7669 \\
+        2{,}00 & 0{,}5470 & 223{,}2 & 24{,}5 & 0{,}53 & 2{,}8387 \\
+        5{,}00 & 0{,}5457 & 239{,}7 & 24{,}0 & 0{,}44 & 2{,}8300 \\
         \bottomrule
     \end{tabular}
 \end{table}
