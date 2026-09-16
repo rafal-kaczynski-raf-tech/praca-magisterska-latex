@@ -395,6 +395,143 @@ Analiza uzyskanych wyników prowadzi do~trzech zasadniczych wniosków:
     \item \textbf{Strukturalna natura tętnień prądu:} warianty CurrentOscillation i~CurrentEffort zbiegły do~nastaw niemal identycznych jak bazowe ITAE ($w_i^* \approx 0{,}213$, $f_c^* \approx 2000$--$2700~\mathrm{Hz}$). Wynika to~z~faktu, że~dolna granica tętnień jest uwarunkowana sprzętowo przez indukcyjność $L$ i~częstotliwość komutacji ($\Delta i_L \approx \frac{V_{\mathrm{in}} D T_{\mathrm{sw}}}{L}$). Człon prądowy w~funkcji celu działa jako bariera odrzucająca patologiczne nastawy regulatora, pozwalając algorytmowi AI osiągnąć fizyczną dolną granicę tętnień dopuszczalną w~danym układzie.
 \end{enumerate}
 
+\subsection{Dwuetapowa procedura optymalizacji regulatora Trend MF-BB}
+\label{subsec:pso-two-stage}
+
+Obserwacja dynamiki regulatora przy zredukowanej pojemności wyjściowej ($C = 200~\mu\mathrm{F}$) ujawniła, że podczas gwałtownego skoku napięcia zadanego w dół ($240 \to 160~\mathrm{V}$ w $t = 150~\mathrm{ms}$) klasyczna struktura MF-BB wykazuje skłonność do zapadu napięcia poniżej wartości zadanej (undershoot rzędu $\sim 7$--$8~\mathrm{V}$). Wynika to z faktu, że przy skoku w dół prąd dławika wchodzi w ujemne nasycenie ogranicznika prądowego ($I_{\min} = -20~\mathrm{A}$), a sam uchyb napięcia nie dostarcza sterownikowi informacji o prędkości zbliżania się do nowego punktu pracy.
+
+W celu eliminacji tego zjawiska zastosowano rozszerzoną strukturę regulatora Trend MF-BB z filtrowanym trendem napięcia wyjściowego:
+\begin{equation}
+    e_{\mathrm{BB}}(k) = \bigl(u_{\mathrm{ref}}(k) - u_{\mathrm{out}}(k)\bigr) + w_i \cdot \bigl(i_{\mathrm{des}}(k) - i_L(k)\bigr) - w_u \cdot \Delta u_f(k),
+    \label{eq:trend-mfbb-surface}
+\end{equation}
+gdzie $\Delta u_f(k) = u_f(k) - u_f(k-1)$ jest przyrostem napięcia wyjściowego przefiltrowanego dyskretnym filtrem dolnoprzepustowym 1. rzędu o częstotliwości odcięcia $f_{c,u}$, a $w_u$ stanowi wagę dynamicznego tłumienia.
+
+Zgodnie z wytycznymi metodycznymi, proces doboru parametrów wektora $\mathbf{x} = [w_i, f_{c,i}, w_u, f_{c,u}]$ zrealizowano w sposób ściśle dwutorowy (decoupled two-stage optimization), rozdzielając optymalizację stanu ustalonego od optymalizacji stanu przejściowego:
+
+\begin{enumerate}
+    \item \textbf{Krok 1 -- Stan ustalony ($w_u = 0$):} W stanie ustalonym napięcie wyjściowe nie wykazuje trendu ($\Delta u_f \approx 0$). Przyjmując $w_u = 0$, algorytm PSO dobiera parę $(w_i^*, f_{c,i}^*)$ w oknie ustalonej pracy pod obciążeniem $1{,}2~\mathrm{kW}$ ($t \in [120;\, 150]~\mathrm{ms}$), minimalizując ważoną sumę odchyłki napięcia i błędu śledzenia prądu:
+    \begin{equation}
+        J_1(w_i, f_{c,i}) = \mathrm{IAE}_u + \lambda_i \cdot \mathrm{IAE}_i = \frac{1}{N}\sum |u_{\mathrm{dc}} - 240\,\mathrm{V}| + \lambda_i \cdot \frac{1}{N}\sum |i_{\mathrm{des}} - i_L|,
+        \label{eq:cost-step1}
+    \end{equation}
+    gdzie współczynnik $\lambda_i$ określa relację wagową błąd napięcia vs. błąd prądu.
+    \item \textbf{Krok 2 -- Stan przejściowy (zamrożone parametry z Kroku 1):} Mając ustalone i zamrożone wartości $(w_i^*, f_{c,i}^*)$, algorytm optymalizuje parametry dynamicznego tłumienia $(w_u^*, f_{c,u}^*)$ w oknie skoku napięcia $240 \to 160~\mathrm{V}$ ($t \in [150;\, 165]~\mathrm{ms}$). Zgodnie z zasadami teorii sterowania, stan nasycenia prądu ($i_L \le -20~\mathrm{A}$) nie podlega optymalizacji (steruje nim nadrzędny ogranicznik sprzętowy). Funkcja celu transjentu łączy całkę kwadratu błędu (kryterium ISE) z karą za zapad poniżej linii $160~\mathrm{V}$:
+    \begin{equation}
+        J_2(w_u) = \int_{150\,\mathrm{ms}}^{165\,\mathrm{ms}} \bigl(u_{\mathrm{dc}}(t) - 160\,\mathrm{V}\bigr)^2\, dt + w_{\mathrm{cross}} \cdot \bigl(\Delta U_{\mathrm{undershoot}}\bigr)^2,
+        \label{eq:cost-step2}
+    \end{equation}
+    gdzie $\Delta U_{\mathrm{undershoot}} = \max\bigl(0,\, 160{,}0\,\mathrm{V} - \min_{t \in [150;\, 155]\,\mathrm{ms}} u_{\mathrm{dc}}(t)\bigr)$, a $w_{\mathrm{cross}}$ jest współczynnikiem kary za zapad (nominalnie $w_{\mathrm{cross}} = 0{,}10$).
+\end{enumerate}
+
+Dla nominalnych parametrów filtrów przyjętych z modelu fizycznego i publikacji IEEE ($f_{c,i} = f_{c,u} = 321{,}0~\mathrm{Hz}$, co dla $T_s = 10~\mu\mathrm{s}$ odpowiada współczynnikom Tustina $\alpha = 0{,}0100$, $\beta = 0{,}9800$), procedura dwuetapowa zwróciła nastawy:
+\begin{equation}
+    w_i^* = 0{,}4000, \quad w_u^* = 15{,}00, \quad f_{c,i} = f_{c,u} = 321{,}0~\mathrm{Hz}.
+    \label{eq:optimal-settings-nominal}
+\end{equation}
+Wartość $w_i^* = 0{,}40$ zapewnia bezpieczny margines stabilności powyżej granicy oscylacji podharmonicznych ($w_i \approx 0{,}25$), natomiast $w_u^* = 15{,}0$ redukuje zapad napięcia po skoku z $7{,}05~\mathrm{V}$ do zaledwie $0{,}26~\mathrm{V}$ (redukcja o $96{,}3\,\%$) bez jakiegokolwiek odbicia w górę.
+
+Odpowiedź czasową układu dla nastaw~\eqref{eq:optimal-settings-nominal} przedstawiono na rysunku~\ref{fig:wykres-dwuetapowy-pelny} (pełny horyzont $0$--$300~\mathrm{ms}$) oraz na rysunku~\ref{fig:wykres-dwuetapowy-zoom} (zbliżenie okna $140$--$210~\mathrm{ms}$ w pełnej rozdzielczości próbek $0{,}5~\mu\mathrm{s}$).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/wykres_dwuetapowy_pelny.png}
+    \caption{Przebiegi napięcia wyjściowego $u_{\mathrm{dc}}(t)$ oraz prądu cewki $i_L(t)$ dla regulatora Trend MF-BB z nastawami wyznaczonymi procedurą dwuetapową ($w_i^* = 0{,}40$, $w_u^* = 15{,}0$, $f_c = 321{,}0~\mathrm{Hz}$).}
+    \label{fig:wykres-dwuetapowy-pelny}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/wykres_dwuetapowy_zoom.png}
+    \caption{Powiększenie odpowiedzi czasowej w oknie $140$--$210~\mathrm{ms}$ (krok próbkowania fizyki $\Delta t = 0{,}5~\mu\mathrm{s}$) dla regulatora Trend MF-BB po skoku referencji $240 \to 160~\mathrm{V}$ i odłączeniu obciążenia.}
+    \label{fig:wykres-dwuetapowy-zoom}
+\end{figure}
+
+\subsection{Badanie wrażliwości procedury optymalizacyjnej}
+\label{subsec:pso-sensitivity}
+
+W celu weryfikacji odporności (ang. \emph{robustness}) algorytmu optymalizacyjnego przeprowadzono systematyczne badanie wrażliwości, analizując wpływ zmian wag wskaźników jakości na otrzymywane nastawy oraz badając propagację wyników z Kroku 1 do Kroku 2.
+
+\paragraph{1. Krok 1 -- Wrażliwość na relację błąd napięcia vs. błąd prądu ($\lambda_i$):}
+Dla zbadania elastyczności pętli prądowej przeprowadzono serię optymalizacji 2D PSO dla parametru $\lambda_i \in [0{,}10;\, 5{,}00]$. W tabeli~\ref{tab:wrazliwosc-krok1} zestawiono wyznaczone przez algorytm wartości par $(w_i^*, f_{c,i}^*)$ oraz odpowiadające im metryki stanu ustalonego.
+
+\begin{table}[h!]
+    \centering
+    \caption{Wyniki optymalizacji 2D PSO w Kroku 1 w zależności od wagi błędu prądu $\lambda_i$ (okno $1{,}2~\mathrm{kW}$, $t \in [120;\, 150]~\mathrm{ms}$).}
+    \label{tab:wrazliwosc-krok1}
+    \begin{tabular}{rrrrrrr}
+        \toprule
+        $\lambda_i$ & $w_i^*$ & $f_{c,i}^*$~[Hz] & $\mathrm{IAE}_u$~[V] & $\mathrm{IAE}_i$~[A] & $\Delta i_{L,\mathrm{pp}}$~[A] & $J_1^*$ \\
+        \midrule
+        0{,}10 & 0{,}3157 & 1000{,}0 & 0{,}2377 & 1{,}275 & 6{,}10 & 0{,}3653 \\
+        0{,}25 & 0{,}3127 & 1000{,}0 & 0{,}2382 & 1{,}274 & 6{,}13 & 0{,}5569 \\
+        0{,}50 & 0{,}3557 & \phantom{0}679{,}7 & 0{,}2436 & 1{,}253 & 5{,}81 & 0{,}8701 \\
+        1{,}00 & 0{,}4427 & \phantom{0}429{,}5 & 0{,}2578 & 1{,}236 & 5{,}84 & 1{,}4942 \\
+        2{,}00 & 0{,}4994 & \phantom{0}289{,}2 & 0{,}2689 & 1{,}227 & 5{,}83 & 2{,}7235 \\
+        5{,}00 & 0{,}5505 & \phantom{0}178{,}2 & 0{,}2852 & 1{,}221 & 5{,}84 & 6{,}3896 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Wraz ze wzrostem wagi $\lambda_i$ (rosnący priorytet tłumienia tętnień prądu) optymalizator płynnie zwiększa wagę $w_i^*$ z $0{,}3157$ do $0{,}5505$, jednocześnie zawężając pasmo filtru $f_{c,i}^*$ z $1000~\mathrm{Hz}$ do $178~\mathrm{Hz}$. Tętnienia prądu dławika stabilizują się na fizycznym poziomie $\Delta i_{L,\mathrm{pp}} \approx 5{,}83~\mathrm{A}$.
+
+\paragraph{2. Krok 2 -- Wrażliwość na wagę kary za zapad ($w_{\mathrm{cross}}$):}
+Dla wyznaczonej w Kroku 1 pary nominalnej ($w_i^* = 0{,}4427$, $f_{c,i}^* = 429{,}5~\mathrm{Hz}$) zbadano odpowiedź algorytmu na wagę kary $w_{\mathrm{cross}} \in [0{,}00;\, 5{,}00]$. Wyniki zestawiono w tabeli~\ref{tab:wrazliwosc-krok2}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Wyniki optymalizacji w Kroku 2 w zależności od wagi kary za zapad $w_{\mathrm{cross}}$ (skok $240 \to 160~\mathrm{V}$, $f_c = 321{,}0~\mathrm{Hz}$).}
+    \label{tab:wrazliwosc-krok2}
+    \begin{tabular}{rrrrr}
+        \toprule
+        $w_{\mathrm{cross}}$ & $w_u^*$ & $\Delta U_{\mathrm{undershoot}}$~[V] & $\mathrm{ISE}_{\mathrm{trans}}$ & $J_2^*$ \\
+        \midrule
+        0{,}00 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7817 \\
+        0{,}02 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7826 \\
+        0{,}05 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7839 \\
+        0{,}10 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7861 \\
+        0{,}20 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}7905 \\
+        0{,}50 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}8037 \\
+        1{,}00 & 16{,}0 & 0{,}21 & 2{,}7817 & 2{,}8256 \\
+        5{,}00 & 20{,}0 & 0{,}18 & 2{,}8220 & 2{,}9895 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+W zakresie $w_{\mathrm{cross}} \in [0{,}00;\, 1{,}00]$ optymalizator zwraca stałą wartość $w_u^* = 16{,}0$ z zapadem $0{,}21~\mathrm{V}$. Fakt, że nawet przy $w_{\mathrm{cross}} = 0$ samo kryterium ISE wskazuje $w_u^* = 16{,}0$, wynika z fizyki obiektu: mniejsze $w_u$ zwiększa zapad, natomiast większe $w_u$ powoduje odbicie napięcia w górę powyżej $160~\mathrm{V}$, co w obu przypadkach zwiększa pole całki kwadratu błędu.
+
+\paragraph{3. Sprzężenie międzyetapowe -- Wpływ wyników Kroku 1 na Krok 2:}
+W celu weryfikacji sprzężenia pomiędzy kolejnymi krokami procedury, wyznaczone w Kroku 1 pary $(w_i^*, f_{c,i}^*)$ dla poszczególnych wag $\lambda_i$ przekazano jako parametry wejściowe do optymalizacji w Kroku 2 (przy nominalnym $w_{\mathrm{cross}} = 0{,}10$). Wyniki zestawiono w tabeli~\ref{tab:wrazliwosc-sprzezenie}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Wpływ rzeczywistych wyników Kroku 1 (w funkcji $\lambda_i$) na wyznaczaną w Kroku 2 wagę trendu $w_u^*$ ($w_{\mathrm{cross}} = 0{,}10$).}
+    \label{tab:wrazliwosc-sprzezenie}
+    \begin{tabular}{rrrrrr}
+        \toprule
+        $\lambda_i$ (Krok 1) & $w_i^*$ (Krok 1) & $f_{c,i}^*$~[Hz] & $w_u^*$ (Krok 2) & $\Delta U_{\mathrm{undershoot}}$~[V] & $J_2^*$ \\
+        \midrule
+        0{,}10 & 0{,}3157 & 1000{,}0 & 22{,}0 & 0{,}26 & 2{,}7710 \\
+        0{,}25 & 0{,}3127 & 1000{,}0 & 21{,}0 & 0{,}27 & 2{,}6748 \\
+        0{,}50 & 0{,}3557 & \phantom{0}679{,}7 & 16{,}5 & 0{,}24 & 2{,}8156 \\
+        1{,}00 & 0{,}4427 & \phantom{0}429{,}5 & 16{,}0 & 0{,}21 & 2{,}7861 \\
+        2{,}00 & 0{,}4994 & \phantom{0}289{,}2 & 22{,}0 & 0{,}24 & 2{,}7668 \\
+        5{,}00 & 0{,}5505 & \phantom{0}178{,}2 & 22{,}5 & 1{,}00 & 2{,}9062 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Dla umiarkowanych wag $\lambda_i \in [0{,}25;\, 2{,}00]$ optymalna waga trendu w Kroku 2 pozostaje stabilna w wąskim przedziale $w_u^* \in [16{,}0;\, 22{,}0]$, zapewniając niski poziom zapadu ($\sim 0{,}21$--$0{,}27~\mathrm{V}$).
+
+Zbiorczą wizualizację badania wrażliwości przedstawiono na rysunku~\ref{fig:badanie-wrazliwosci}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{rysunki/wykres_badanie_wrazliwosci.png}
+    \caption{Zbiorcze wykresy badania wrażliwości procedury dwuetapowej: (A) zależność $w_i^*$ (oś lewa) oraz $f_{c,i}^*$ (oś prawa) od wagi $\lambda_i$ w Kroku 1; (B) zależność $w_u^*$ od wagi kary za zapad $w_{\mathrm{cross}}$ w Kroku 2; (C) wpływ wagi $\lambda_i$ przyjętej w Kroku 1 na wyznaczaną w Kroku 2 wagę trendu $w_u^*$.}
+    \label{fig:badanie-wrazliwosci}
+\end{figure}
+
 \section{Złożoność obliczeniowa i~zrównoleglanie}
 \label{sec:zlozonosc}
 
