@@ -1,103 +1,87 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{easyappendix}{\LaTeX{} -- więcej przykładów}
-\label{app:latex}
+\begin{easyappendix}{Struktura repozytorium kodu i~instrukcja uruchomieniowa}
+\label{app:kod}
 
-Pusta linia oznacza nowy akapit.
-Ta linia kontynuuje poprzedni akapit, chociaż w~edytorze jest odrębną linią, oddzieloną jednym ,,enterem''. Wokół rysunków, tabel, listingów również należy zostawiać puste linie, gdyż w~pewnym sensie stanowią odrębne akapity.
+Niniejszy załącznik zawiera techniczną dokumentację wytworzonego oprogramowania, opis struktury repozytorium oraz instrukcję reprodukcji wyników eksperymentów numerycznych i~optymalizacyjnych Bliźniaka Cyfrowego. Całość kodu źródłowego pracy została objęta systemem kontroli wersji Git i~jest dostępna w~repozytorium projektowym.
 
+\section*{Wymagania środowiskowe i instalacja}
 
+Projekt został zaimplementowany w~języku \textbf{Python~3.12} (z~pełną kompatybilnością z~wersjami 3.10--3.14). Zarządzanie zależnościami oparto o~środowisko wirtualne \texttt{venv} oraz zablokowane wersje bibliotek w~pliku \texttt{requirements.txt}.
 
+\begin{lstlisting}[language=bash,
+	caption={Kroki instalacji środowiska wirtualnego i~zależności},
+	label={lst:instalacja}]
+	# 1. Klonowanie repozytorium
+	git clone https://github.com/rafal-kaczynski-raf-tech/praca-magisterska.git
+	cd praca-magisterska
 
+	# 2. Utworzenie i aktywacja wirtualnego srodowiska
+	python3 -m venv .venv
+	source .venv/bin/activate        # Linux / macOS
+	# .venv\Scripts\activate         # Windows
 
-Dużo pustych linii nie skutkuje większą ilością miejsca, gdyż w~\LaTeX{u} nie ma możliwości ,,formatowania enterami       i~     spacjami'', typowego dla gorszych rozwiązań i~słabych umiejętności edycji tekstu.
+	# 3. Instalacja scisle zdefiniowanych zaleznosci
+	pip install --upgrade pip
+	pip install -r requirements.txt
+\end{lstlisting}
 
-
-Strona tuż przed początkiem nowego rozdziału albo załącznika, czy innego wyróżnionego obszaru, może zostać całkiem pusta i~nawet nie będzie mieć numeracji u~dołu. Jest to jak najbardziej prawidłowe, gdyż rozdziały mają zaczynać się od strony prawej w~druku dwustronnym a~więc od strony nieparzystej. Stron bez tekstu nie numeruje się, chociaż są one liczone.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Styl tekstu}
-W przykładowym dokumencie pojawiło się modyfikowanie wyglądu liter za pomocą kilku metod. Tu dla porządku zostaną one zebrane na jednej liście z~przykładami użycia:
+\section*{Główne zależności obliczeniowe i narzędziowe}
 \begin{itemize}
-	\item \textbf{tekst wytłuszczony},
-	\item \textit{tekst pochylony},
-	\item \texttt{tekst maszynowy},
-	\item \underline{tekst podkreślony}
-	\item tekst \emph{wyróżniony} \textbf{odmiennym \emph{stylem}}, \textit{w zależności \emph{od sytuacji}} -- \emph{jest to \textbf{rozwiązanie} \textit{uniwersalne}}.
+	\item \textbf{NumPy} ($\ge 2.0.0$) -- wektoryzowane struktury danych, tablice próbek i~operacje całkowania trapezowego,
+	\item \textbf{PySwarms} ($= 1.3.0$) -- zweryfikowana biblioteka akademicka kanonicznego algorytmu PSO (\texttt{GlobalBestPSO}),
+	\item \textbf{SciPy} ($\ge 1.18.0$) -- funkcje statystyczne i~pomocnicze procedury naukowe,
+	\item \textbf{Matplotlib} ($\ge 3.10.0$) -- generowanie publikacyjnych wykresów i~trajektorii czasowych,
+	\item \textbf{ReportLab} ($\ge 4.0.0$) -- automatyczny generator formalnych raportów akademickich w~formacie PDF.
 \end{itemize}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Wypunktowania}
-\LaTeX{} ma duże możliwości jeśli chodzi o~formatowanie wypunktowań. Jednak zgodnie z~obowiązującymi na PW zaleceniami można stosować tylko dwa rodzaje punktorów:
+\section*{Struktura katalogów i modułów projektu}
+Projekt podzielono na modularne pakiety zgodnie z~zasadami czystej architektury (ang.~\emph{Clean Architecture}):
+
 \begin{itemize}
-	\item standardową ,,kropkę'' -- rozwiązanie domyślne,
-	\item[--] myślnik -- wymaga interwencji, jak w~tym przykładzie.
-\end{itemize}
-Zatem nie można używać wypunktowań numerycznych, list opisowych i~tak dalej. Stosowane w~niniejszym dodatku polecenie \texttt{paragraph} również powinno być unikane w~pracy dyplomowej, gdyż wprowadza zbędne zamieszanie w~strukturze pracy.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Samotne literki}
-
-W polskiej tradycji piśmienniczej pojedyncze litery nie powinny występować na końcu linii. Aby połączyć taką literę z~następującym po nim słowem należy użyć znaku tyldy \keys{\textasciitilde{}}. Dotyczyć to może liter takich jak: a, i, o, u, w, z. Problem ten może dotyczyć też wielkich liter rozpoczynających zdania, o~czym czasem zdarza się zapomnieć.
-
-Pod koniec pisania pracy dobrze jest skorzystać z~opcji ,,znajdź i~zamień'' by wymienić wszystkie ciągi znaków \keys{\SPACE, znak, \SPACE} na \keys{\SPACE, znak, \textasciitilde{}}.
-
-W~tym tekście zostało to zrobione.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Dywiz a~myślnik}
-Podejście do typografii w~\LaTeX{u} jest profesjonalne co wiąże się też z~dbałością o~rozróżnienie różnych rodzajów ,,myślników'':
-\begin{itemize}
-	\item pojedynczy znak minus ,,-'' to dywiz, stosowany do:
+	\item \directory{src/} -- Rdzeń Bliźniaka Cyfrowego (silnik fizyczny i~sterowniki):
 	\begin{itemize}
-		\item przenoszenia wyrazów do nowej linii; uwaga: nie robimy tego ręcznie!
-		\item łączenia słów (na przykład: Golub-Dobrzyń).
+		\item \texttt{converter.py} -- model stanu przekształtnika podwyższającego (Boost) i~implementacja metody Eulera,
+		\item \texttt{controller.py} -- implementacja regulatorów: histerezowego, klasycznego MF-BB oraz proponowanego Trend MF-BB z~ogranicznikiem prądu,
+		\item \texttt{simulator.py} -- orkiestrator pętli czasowej sprzęgający fizykę obwodu z~dyskretnym taktowaniem sterownika,
+		\item \texttt{filters.py} -- dyskretne filtry dolnoprzepustowe 1. rzędu Tustina ($T_s = 10~\mu\mathrm{s}$),
+		\item \texttt{config.py} -- klasy konfiguracyjne parametrów obwodu i~symulacji oparte o~dekorator \texttt{@dataclass}.
 	\end{itemize}
-	\item dwa znaki minus obok siebie ,,-{}-'' % tu celowo oddzielone, żeby się nie połączyły
-	to ,,prawdziwy'' myślnik (--) o~wyraźnie większej długości od dywizu -- można go stosować w~zdaniach złożonych, oddzielając spacjami od sąsiadujących z~nim wyrazów,
-	\item trzy znaki minus obok siebie praktycznie nie wystąpią w~pracach technicznych a~służą do oznaczania dialogów. ---~Serio? ---~Ano tak.
+	\item \directory{optymalizacja/} -- Moduły optymalizacji rojem cząstek (PSO) i~analizy wrażliwości:
+	\begin{itemize}
+		\item \texttt{pyswarms\_optimizer.py} -- oficjalny adapter łączący symulator z~biblioteką \texttt{PySwarms},
+		\item \texttt{cost\_functions.py} -- implementacja funkcji celu (MSE, IAE, ITAE, CurrentAware, transient ISE),
+		\item \texttt{optymalizacja\_dwuetapowa\_2d.py} -- skrypt wykonawczy procedury dwutorowej 2D PSO,
+		\item \texttt{badanie\_wrazliwosci.py} -- analiza odporności i~wrażliwości wag $\lambda_i$ oraz $w_{\mathrm{cross}}$,
+		\item \texttt{test\_pyswarms\_porownanie.py} -- skrypt walidacji krzyżowej silnika PySwarms względem procedury referencyjnej.
+	\end{itemize}
+	\item \directory{tests/} -- Zautomatyzowany zestaw testów jednostkowych i~regresyjnych:
+	\begin{itemize}
+		\item \texttt{test\_regression.py} -- test regresyjny weryfikujący zgodność bit-w-bit z~zamrożonym baseline'em,
+		\item \texttt{test\_filters.py} -- testy charakterystyk częstotliwościowych filtrów cyfrowych.
+	\end{itemize}
 \end{itemize}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Tabele}
-Prostą tabelą, wprowadzoną ręcznie, jest przykładowa tabela~\ref{tab:zjawiska}. Tego rodzaju tabela wystarczy w~większości prac. Wygląd tabelaryczny uzyskuje się za pomocą otoczenia \texttt{tabular}. Sam wygląd tabelaryczny to jednak jeszcze nie jest tabela, tak jak zbiór komórek z~arkusza kalkulacyjnego nie jest tabelą. Aby uzyskać tabelę należy \texttt{tabular} otoczyć za pomocą środowiska \texttt{table}. Wtedy taką tabelę można opatrzyć tytułem (\texttt{caption}), koniecznie z~góry i~znacznikiem (\texttt{label}) pozwalającym na odwołania do niej z~tekstu. To te same polecenia, co w~przypadku rysunków.
+\section*{Instrukcja uruchomienia kluczowych eksperymentów}
 
-\begin{table}[!ht]
-	\caption{\label{tab:zjawiska}Wybrane zjawiska astronomiczne z~lat 2016-2020}
-	\centering
-	\begin{tabular}{p{2.5cm}c|l}
-		Data        &   Godzina (UTC)   &   Zdarzenie\\\hline\hline
-		2016-05-09  &   14:57           &   Tranzyt Merkurego\\\hline
-		2017-08-11 --~2017-08-13  & --- &   Maksimum Perseidów \\\hline
-		2018-07-27  &   20:22           &   Całkowite zaćmienie Księżyca\\\hline
-		2019-08-24  &   17:04           &   Koniunkcja Wenus i~Mars w~odległości - 0°17`\\\hline
-		2020-12-21  &   16:00           &   Koniunkcja Jowisz i~Saturn w~odległości 0°06`
-	\end{tabular}
-\end{table}
+\begin{lstlisting}[language=bash,
+	caption={Polecenia uruchomienia testow, symulacji oraz optymalizacji},
+	label={lst:uruchomienie}]
+	# 1. Uruchomienie testow jednostkowych i regresyjnych
+	pytest tests/
 
-Podobnie jak dla rysunków tak i~tabelom można wskazać posadowienie za pomocą oznaczeń literowych (h, b, t) i~wykrzyknika. Umieszczenie tabeli w~dole strony może kolidować z~przypisem dolnym, więc lepiej użyć dla nich ,,h'' lub ,,t'' albo obu jednocześnie. Przypisów dolnych jednak najlepiej nie stosować w~ogóle, gdyż zaburzają ciągłość czytania tekstu.
+	# 2. Uruchomienie pelnej symulacji porownawczej wzgledem modelu PSIM
+	python porownanie_bb_estim_full_psim.py
 
- Liczbę kolumn i~ułożenie w~nich tekstu określa się jako argumenty polecenia \texttt{tabular}:
-\begin{itemize}
-	\item l -- dosunięcie do lewej,
-	\item r -- dosunięcie do prawej,
-	\item c -- centrowanie,
-	\item p -- styl akapitowy z~szerokością określoną parametrem.
-\end{itemize}
-Jeśli kolumny mają być oddzielone pionowymi liniami to między odpowiednimi literami powinna pojawić się pionowa kreska ,,|''.
+	# 3. Wykonanie dwutorowej optymalizacji 2D z uzyciem PySwarms
+	python -m optymalizacja.optymalizacja_dwuetapowa_2d
 
-W kolejnych liniach treści z~poszczególnych kolumn oddziela się znakiem ,,\&''. Wiersz tabeli kończy się {\LaTeX}owym znakiem nowego wiersza czyli podwójnym ukośnikiem: ,,\textbackslash\textbackslash''. Za nim można wstawić polecenie oznaczające narysowanie linii \texttt{\textbackslash{}hline}, która oddzieli dany wiersz tabeli od kolejnych. Można też zrobić podwójną linię (\texttt{\textbackslash{}hline\textbackslash{}hline}) w~celu odcięcia danego wiersza, na przykład nagłówka, od następnego za pomocą wąskiej, pustej przestrzeni.
+	# 4. Wykonanie pelnego badania wrazliwosci algorytmu PSO
+	python -m optymalizacja.badanie_wrazliwosci
+\end{lstlisting}
 
-Tabele są jednym z~trudniejszych elementów do wprowadzenia w~\LaTeX{u} ze względu na nagromadzenie znaczników. Dlatego warto rozważyć tworzenie tabeli za pomocą dedykowanego narzędzia on-line, takiego jak:
+Wyniki symulacji numerycznych oraz wygenerowane raporty w~formacie PDF i~wykresy PNG zapisywane są bezpośrednio w~katalogu głównym projektu oraz podkatalogu \directory{optymalizacja/}.
 
-\begin{itemize}
-	\item \href{https://www.latex-tables.com/}{LaTeX Tables Editor} -- dość rozbudowany, pozwala myszką rysować krawędzie i~to w~różnych kolorach.
-	\item \href{https://www.tablesgenerator.com/}{Tables Generator} -- podobny edytor do powyższego ale bardziej stara się przypominać edytory WYSIWYG. Wygenerowany kod ma kolorowaną składnię, więc dobrze się go ogląda. Zapamiętuje poprzednio edytowaną tabelkę.
-	\item \href{https://truben.no/table/}{Table Editor} -- prosty generator tabelek nie tylko dla LaTeXa.
-	\item \href{https://tableconvert.com/latex-generator} -- edycja i~konwersja tabelek w~różnych formatach.
-\end{itemize}
-
-\begin{figure}[!ht]
-	\centering \includegraphics[height=0.25\textheight]{kile.png} % rysunek o~wysokości 1/4 wysokości tekstu na stronie
+\end{easyappendix}
 	\caption{Wykorzystanie programu Kile do edycji tabeli}
 	\label{rys:kile}
 \end{figure}

@@ -1,32 +1,131 @@
-% Akronim: nazwa symboliczna (dla LaTeXa), nazwa skrócona, nazwa pełna
-\newacronym{IEEE}{IEEE}{Institute of Electrical and Electronics Engineers}
-\newacronym{CPEE}{CPEE}{Computational Problems of Electrical Engineering}
+% Akronimy używane w pracy magisterskiej
+\newacronym{DC}{DC}{Direct Current (prąd stały)}
+\newacronym{AC}{AC}{Alternating Current (prąd przemienny)}
+\newacronym{OZE}{OZE}{Odnawialne Źródła Energii}
+\newacronym{NMP}{NMP}{Non-Minimum Phase (faza nieminimalna)}
+\newacronym{RHP}{RHPZ}{Right Half-Plane Zero (zero w prawej półpłaszczyźnie zmiennej s)}
+\newacronym{MFBB}{MF-BB}{Model-Free Bang-Bang (bezmodelowe sterowanie przekaźnikowe)}
+\newacronym{TrendMFBB}{Trend MF-BB}{Model-Free Bang-Bang z filtrowanym trendem napięcia}
+\newacronym{FSMPC}{FS-MPC}{Finite-State Model Predictive Control (sterowanie predykcyjne o skończonym zbiorze stanów)}
+\newacronym{PSO}{PSO}{Particle Swarm Optimization (Optymalizacja Rojem Cząstek)}
+\newacronym{ZOH}{ZOH}{Zero-Order Hold (ekstrapolator zerowego rzędu)}
+\newacronym{OCP}{OCP}{Over-Current Protection (zabezpieczenie nadprądowe)}
+\newacronym{PWM}{PWM}{Pulse Width Modulation (modulacja szerokości impulsów)}
+\newacronym{PI}{PI}{Proportional-Integral (regulator proporcjonalno-całkujący)}
+\newacronym{LPF}{LPF}{Low-Pass Filter (filtr dolnoprzepustowy)}
+\newacronym{ESR}{ESR}{Equivalent Series Resistance (zastępcza rezystancja szeregowa)}
+\newacronym{DT}{DT}{Digital Twin (Bliźniak Cyfrowy)}
+\newacronym{OOP}{OOP}{Object-Oriented Programming (programowanie obiektowe)}
+\newacronym{IAE}{IAE}{Integral of Absolute Error (całka modułu błędu)}
+\newacronym{ISE}{ISE}{Integral of Squared Error (całka kwadratu błędu)}
+\newacronym{ITAE}{ITAE}{Integral of Time-weighted Absolute Error (całka iloczynu czasu i modułu błędu)}
+\newacronym{MSE}{MSE}{Mean Squared Error (błąd średniokwadratowy)}
 \newacronym{PW}{PW}{Politechnika Warszawska}
-\newacronym{IETiSIP}{IETiSIP}{Instytut Elektrotechniki Teoretycznej i~Systemów Informacyjno-Pomiarowych}
-\newacronym{laser}{LASER}{Light Amplification by Stimulated Emission of Radiation}
+\newacronym{IEEE}{IEEE}{Institute of Electrical and Electronics Engineers}
 
-\newglossaryentry{symb:Phi}{
-name=$\phi$,
-description={foobar.},
-sort=symbolphi, type=symbols
+% Symbole i oznaczenia matematyczne
+\newglossaryentry{symb:Vin}{
+    name={\ensuremath{V_{\mathrm{in}}}},
+    description={Napięcie zasilania przekształtnika (strona niskonapięciowa) [V]},
+    sort=Vin, type=symbols
 }
-
-\newglossaryentry{test}{name={TeSt}, description={testowanie}}
-
-\newglossaryentry{symb:I}{
-name={\ensuremath{I}},
-description={Natężęnie prądu elektrycznego.},
-sort=symbI, type=symbols
+\newglossaryentry{symb:L}{
+    name={\ensuremath{L}},
+    description={Indukcyjność dławika magazynującego energię [H]},
+    sort=L, type=symbols
 }
-
-\newglossaryentry{symb:Pi}{
-name=$\pi$,
-description={Stała matematyczna równa stosunkowi długości okręgu do jego średnicy.},
-sort=symbolpi, type=symbols
+\newglossaryentry{symb:RL}{
+    name={\ensuremath{R_L}},
+    description={Pasożytnicza rezystancja szeregowa uzwojenia dławika [\textOmega]},
+    sort=RL, type=symbols
 }
-
-\newglossaryentry{symb:rho}{
-name=$\rho$,
-description={Opór właściwy.},
-sort=symbolrho, type=symbols
+\newglossaryentry{symb:C}{
+    name={\ensuremath{C}},
+    description={Pojemność kondensatora filtru wyjściowego [F]},
+    sort=C, type=symbols
+}
+\newglossaryentry{symb:Rload}{
+    name={\ensuremath{R_{\mathrm{load}}}},
+    description={Rezystancja zastępcza obciążenia wyjściowego [\textOmega]},
+    sort=Rload, type=symbols
+}
+\newglossaryentry{symb:iL}{
+    name={\ensuremath{i_L(t)}},
+    description={Chwilowy prąd dławika przekształtnika [A]},
+    sort=iL, type=symbols
+}
+\newglossaryentry{symb:udc}{
+    name={\ensuremath{u_{\mathrm{dc}}(t)}},
+    description={Chwilowe napięcie wyjściowe na kondensatorze [V]},
+    sort=udc, type=symbols
+}
+\newglossaryentry{symb:uref}{
+    name={\ensuremath{u_{\mathrm{ref}}}},
+    description={Wartość zadana napięcia wyjściowego przekształtnika [V]},
+    sort=uref, type=symbols
+}
+\newglossaryentry{symb:s}{
+    name={\ensuremath{s(t)}},
+    description={Dwustanowy sygnał sterujący kluczami półprzewodnikowymi, $s \in \{0, 1\}$},
+    sort=s, type=symbols
+}
+\newglossaryentry{symb:D}{
+    name={\ensuremath{D}},
+    description={Współczynnik wypełnienia impulsów sterujących (ang. duty cycle)},
+    sort=D, type=symbols
+}
+\newglossaryentry{symb:ides}{
+    name={\ensuremath{i_{\mathrm{des}}}},
+    description={Pożądany (zadany) prąd dławika wyznaczany w regulatorze MF-BB [A]},
+    sort=ides, type=symbols
+}
+\newglossaryentry{symb:wi}{
+    name={\ensuremath{w_i}},
+    description={Współczynnik wagowy uchybu prądu w funkcji przełączającej [-]},
+    sort=wi, type=symbols
+}
+\newglossaryentry{symb:wu}{
+    name={\ensuremath{w_u}},
+    description={Współczynnik wagowy trendu napięcia wyjściowego [-]},
+    sort=wu, type=symbols
+}
+\newglossaryentry{symb:delta_uf}{
+    name={\ensuremath{\Delta u_f}},
+    description={Przyrost przefiltrowanego napięcia wyjściowego w kroku regulatora [V]},
+    sort=duf, type=symbols
+}
+\newglossaryentry{symb:fci}{
+    name={\ensuremath{f_{c,i}}},
+    description={Częstotliwość odcięcia filtru dolnoprzepustowego prądu [Hz]},
+    sort=fci, type=symbols
+}
+\newglossaryentry{symb:fcu}{
+    name={\ensuremath{f_{c,u}}},
+    description={Częstotliwość odcięcia filtru dolnoprzepustowego napięcia [Hz]},
+    sort=fcu, type=symbols
+}
+\newglossaryentry{symb:Ts}{
+    name={\ensuremath{T_s}},
+    description={Okres próbkowania i taktowania algorytmu sterowania ($10~\mu\mathrm{s}$) [s]},
+    sort=Ts, type=symbols
+}
+\newglossaryentry{symb:dt}{
+    name={\ensuremath{\Delta t}},
+    description={Krok całkowania numerycznego silnika fizyki ($0{,}5~\mu\mathrm{s}$) [s]},
+    sort=dt, type=symbols
+}
+\newglossaryentry{symb:w_inertia}{
+    name={\ensuremath{w}},
+    description={Waga bezwładności w algorytmie PSO (ang. inertia weight) [-]},
+    sort=w_inertia, type=symbols
+}
+\newglossaryentry{symb:c1}{
+    name={\ensuremath{c_1}},
+    description={Współczynnik uczenia kognitywnego cząstki w roju PSO [-]},
+    sort=c1, type=symbols
+}
+\newglossaryentry{symb:c2}{
+    name={\ensuremath{c_2}},
+    description={Współczynnik uczenia społecznego roju w PSO [-]},
+    sort=c2, type=symbols
 }

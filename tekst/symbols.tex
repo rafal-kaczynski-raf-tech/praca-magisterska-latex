@@ -1,65 +1,61 @@
-% Ręcznie tworzona lista symboli - substytut w~przypadku kompilowania za pomocą Overleaf
-% UWAGA: lista uzupelniana sukcesywnie w~miare wprowadzania nowych symboli
-% w~kolejnych rozdzialach pracy. Kolejnosc: parametry obwodu, sygnaly dynamiczne,
-% parametry sterownika, parametry numeryczne, parametry optymalizacji.
+% Ręcznie tworzona lista symboli - do użycia w wydruku pracy i na Overleafie
 \flushleft
 
-% --- Parametry elektryczne obwodu (rozdz. 3, sek. 3.2) ---
-\ensuremath{V_{in}}
-\hspace{1cm}
-Napięcie zasilania przekształtnika (strona niskonapięciowa), [V]
+\textbf{\large Wykaz skrótów i akronimów}
+\vspace{0.8em}
 
-\vspace{0.3em}
-\ensuremath{L}
-\hspace{1cm}
-Indukcyjność dławika, [H]
+\begin{tabular}{ll}
+    \textbf{AC} & \emph{Alternating Current} -- prąd przemienny \\
+    \textbf{DC} & \emph{Direct Current} -- prąd stały \\
+    \textbf{DT} & \emph{Digital Twin} -- Bliźniak Cyfrowy \\
+    \textbf{ESR} & \emph{Equivalent Series Resistance} -- zastępcza rezystancja szeregowa \\
+    \textbf{FS-MPC} & \emph{Finite-State Model Predictive Control} -- sterowanie predykcyjne ze skończonym zbiorem stanów \\
+    \textbf{IAE} & \emph{Integral of Absolute Error} -- całka modułu błędu \\
+    \textbf{ISE} & \emph{Integral of Squared Error} -- całka kwadratu błędu \\
+    \textbf{ITAE} & \emph{Integral of Time-weighted Absolute Error} -- całka iloczynu czasu i modułu błędu \\
+    \textbf{LPF} & \emph{Low-Pass Filter} -- filtr dolnoprzepustowy \\
+    \textbf{MF-BB} & \emph{Model-Free Bang-Bang} -- bezmodelowe sterowanie przekaźnikowe \\
+    \textbf{MSE} & \emph{Mean Squared Error} -- błąd średniokwadratowy \\
+    \textbf{NMP} & \emph{Non-Minimum Phase} -- układ z dynamiką fazy nieminimalnej \\
+    \textbf{OCP} & \emph{Over-Current Protection} -- zabezpieczenie nadprądowe dławika \\
+    \textbf{OOP} & \emph{Object-Oriented Programming} -- programowanie obiektowe \\
+    \textbf{OZE} & Odnawialne Źródła Energii \\
+    \textbf{PI} & Regulator proporcjonalno-całkujący (\emph{Proportional-Integral}) \\
+    \textbf{PSO} & \emph{Particle Swarm Optimization} -- Optymalizacja Rojem Cząstek \\
+    \textbf{PWM} & \emph{Pulse Width Modulation} -- modulacja szerokości impulsów \\
+    \textbf{RHPZ} & \emph{Right Half-Plane Zero} -- zero w prawej półpłaszczyźnie zmiennej zespolonej $s$ \\
+    \textbf{Trend MF-BB} & Zmodyfikowany regulator MF-BB z filtrowanym trendem napięcia \\
+    \textbf{ZOH} & \emph{Zero-Order Hold} -- ekstrapolator zerowego rzędu (opóźnienie pomiarowe 1 próbki) \\
+\end{tabular}
 
-\vspace{0.3em}
-\ensuremath{R_L}
-\hspace{1cm}
-Pasożytnicza rezystancja uzwojenia dławika, [\textOmega]
+\vspace{1.5em}
+\textbf{\large Wykaz ważniejszych symboli i oznaczeń}
+\vspace{0.8em}
 
-\vspace{0.3em}
-\ensuremath{C}
-\hspace{1cm}
-Pojemność kondensatora wyjściowego, [F]
-
-\vspace{0.3em}
-\ensuremath{R_{obc}}
-\hspace{1cm}
-Rezystancja zastępcza obciążenia, [\textOmega]
-
-% --- Sygnaly dynamiczne (rozdz. 3, sek. 3.2.3) ---
-\vspace{0.6em}
-\ensuremath{i_L(t)}
-\hspace{1cm}
-Chwilowy prąd płynący przez dławik, [A]
-
-\vspace{0.3em}
-\ensuremath{u_{dc}(t)}
-\hspace{1cm}
-Chwilowe napięcie na kondensatorze wyjściowym, [V]
-
-\vspace{0.3em}
-\ensuremath{u_L(t)}
-\hspace{1cm}
-Chwilowe napięcie na zaciskach dławika, [V]
-
-\vspace{0.3em}
-\ensuremath{i_C(t)}
-\hspace{1cm}
-Chwilowy prąd ładowania kondensatora wyjściowego, [A]
-
-\vspace{0.3em}
-\ensuremath{s(t)}
-\hspace{1cm}
-Binarna zmienna sterująca stanem pary łączników półprzewodnikowych, \ensuremath{s\in\{0,1\}}
-
-% --- Sygnaly sterownika (rozdz. 3, sek. 3.2 -> rozszerzane w sek. nt. MF-BB) ---
-\vspace{0.6em}
-\ensuremath{u_{ref}}
-\hspace{1cm}
-Napięcie zadane na wyjściu przekształtnika, [V]
-
-% TODO: w miare pisania kolejnych sekcji dopisywac tu nowe symbole:
-%   i_des, i_out_est, i_out_filt, w_i, K_v, omega_c, T_s, dt, ...
+\begin{tabular}{lll}
+    \textbf{Symbol} & \textbf{Jedn.} & \textbf{Opis} \\
+    \midrule
+    $V_{\mathrm{in}}$ & V & Napięcie zasilania przekształtnika (strona dolnego napięcia) \\
+    $L$ & H & Indukcyjność dławika magazynującego energię ($0{,}75~\mathrm{mH}$) \\
+    $R_L$ & $\Omega$ & Pasożytnicza rezystancja uzwojenia dławika ($0{,}05~\Omega$) \\
+    $C$ & F & Pojemność kondensatora filtru wyjściowego ($200~\mu\mathrm{F}$ nominalnie) \\
+    $R_{\mathrm{load}}$ & $\Omega$ & Zastępcza rezystancja obciążenia wyjściowego ($47{,}619~\Omega$ dla $1{,}2~\mathrm{kW}$) \\
+    $u_{\mathrm{dc}}(t)$ & V & Chwilowe napięcie na kondensatorze wyjściowym \\
+    $i_L(t)$ & A & Chwilowy prąd płynący przez dławik \\
+    $u_{\mathrm{ref}}$ & V & Wartość zadana napięcia wyjściowego ($240~\mathrm{V}$ / $160~\mathrm{V}$) \\
+    $i_{\mathrm{des}}$ & A & Pożądany prąd cewki generowany w algorytmie MF-BB \\
+    $s(t)$ & --- & Dwustanowy sygnał sterujący kluczami półprzewodnikowymi, $s \in \{0, 1\}$ \\
+    $D$ & --- & Współczynnik wypełnienia impulsów (ang. \emph{duty cycle}) \\
+    $w_i$ & --- & Współczynnik wagowy uchybu prądu w funkcji przełączającej \\
+    $w_u$ & --- & Współczynnik wagowy tłumienia trendu napięcia wyjściowego \\
+    $\Delta u_f$ & V & Dyskretny przyrost przefiltrowanego napięcia wyjściowego w kroku regulatora \\
+    $f_{c,i}$ & Hz & Częstotliwość odcięcia filtru dolnoprzepustowego prądu ($321~\mathrm{Hz}$) \\
+    $f_{c,u}$ & Hz & Częstotliwość odcięcia filtru dolnoprzepustowego napięcia ($321~\mathrm{Hz}$) \\
+    $T_s$ & s & Okres próbkowania i wykonywania algorytmu sterowania ($10~\mu\mathrm{s}$) \\
+    $\Delta t$ & s & Krok całkowania numerycznego fizyki obwodu ($0{,}5~\mu\mathrm{s}$) \\
+    $I_{\max}, I_{\min}$ & A & Sprzętowe progi ogranicznika prądowego dławika ($\pm 20~\mathrm{A}$) \\
+    $w$ & --- & Waga bezwładności w algorytmie PSO (ang. \emph{inertia weight}) \\
+    $c_1, c_2$ & --- & Współczynniki uczenia kognitywnego i społecznego w roju PSO \\
+    $\lambda_i$ & --- & Współczynnik kary za błąd prądu w funkcji celu Kroku 1 \\
+    $w_{\mathrm{cross}}$ & --- & Współczynnik kary za zapad napięcia w funkcji celu Kroku 2 \\
+\end{tabular}

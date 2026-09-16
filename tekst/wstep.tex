@@ -11,39 +11,27 @@
 \section{Wprowadzenie do tematyki}
 \label{sec:wprowadzenie}
 
-Dzisiejszy rozwój energetyki rozproszonej oraz dynamiczna ekspansja odnawialnych źródeł energii (OZE) powodują, że tradycyjny model scentralizowanej dystrybucji energii ustępuje miejsca koncepcji \emph{mikrosieci} -- lokalnie zarządzanych ukłdów elektroenergetycznych łączących wytwarzanie, magazynowanie i~zużycie energii. Bardzo istotnym wariantem są mikrosieci prądu stałego (DC), które naturalnie odpowiadają charakterystyce pracy ogniw fotowoltaicznych, akumulatorów elektrochemicznych oraz nowoczesnych odbiorników półprzewodnikowych. Wykluczaja one potrzebe wielokrotnego przetwarzania energii pomiędzy domenami AC i~DC, co bezpośrednio przekłada się na większa wydajnośċ oraz prostszą architekturę regulacji.
-% TODO cytat: artykuł przeglądowy o mikrosieciach DC i przetwornicach DC/DC
-% (np. przegląd w Energies / IEEE Access / IET Renewable Power Generation).
+Dzisiejszy rozwój energetyki rozproszonej oraz dynamiczna ekspansja odnawialnych źródeł energii (OZE) powodują, że tradycyjny model scentralizowanej dystrybucji energii ustępuje miejsca koncepcji \emph{mikrosieci} -- lokalnie zarządzanych układów elektroenergetycznych łączących wytwarzanie, magazynowanie i~zużycie energii. Bardzo istotnym wariantem są mikrosieci prądu stałego (DC), które naturalnie odpowiadają charakterystyce pracy ogniw fotowoltaicznych, akumulatorów elektrochemicznych oraz nowoczesnych odbiorników półprzewodnikowych. Wykluczają one potrzebę wielokrotnego przetwarzania energii pomiędzy domenami AC i~DC, co bezpośrednio przekłada się na wyższą sprawność oraz prostszą architekturę regulacji.
 
-Bardzo ważnym elementem każdej mikrosieci DC są \emph{dwukierunkowe przekształtniki energoelektroniczne}, które odpowiadaja za kontrolowany przepływ energii pomiędzy szyną zbiorczą a~poszczególnymi modułami systemu --źródłami odnawialnymi, magazynami energii czy odbiorami. Jednym z najczęściej stosowanych rozwiązań w energoelektronice jest układ Buck-Boost, który umożliwia pracę w~trybach podwyższania i~obniżania napięcia, oferując przy tym pełną swobodę w zakresie kierunku transferu mocy.
-% TODO cytat: klasyczne źródło o topologiach przetwornic DC-DC
-% (np. Erickson \& Maksimović "Fundamentals of Power Electronics" — najczęściej
-% cytowana pozycja podstawowa; lub Kazmierkowski et al. "Control in Power
-% Electronics" jeśli zdobędziesz egzemplarz).
-Zapewnienie stabilnego i dokładnego sterowania takimi systemami jest skomplikowanym zadaniem inżynierskim, ponieważ ich dynamika cechuje się silną nieliniowością oraz, w~niektórych przypadkach, zjawiskiem fazy nieminimalnej (ang. \emph{non-minimum phase}, NMP). polegającym na początkowej, odwrotnej do zamierzonej, reakcji napięcia wyjściowego na zmiany sygnału sterującego~\cite{tatari2024mfbb}.
+Bardzo ważnym elementem każdej mikrosieci DC są \emph{dwukierunkowe przekształtniki energoelektroniczne}, które odpowiadają za kontrolowany przepływ energii pomiędzy szyną zbiorczą a~poszczególnymi modułami systemu -- źródłami odnawialnymi, magazynami energii czy odbiorami~\cite{erickson2020}. Jednym z najczęściej stosowanych rozwiązań w energoelektronice jest układ podwyższający (Boost) pracujący w topologii dwukierunkowej, który umożliwia elastyczną pracę w~szerokim zakresie napięć, oferując przy tym pełną swobodę w zakresie kierunku transferu mocy.
+
+Zapewnienie stabilnego i dokładnego sterowania takimi systemami jest skomplikowanym zadaniem inżynierskim, ponieważ ich dynamika cechuje się silną nieliniowością oraz, w~niektórych punktach pracy, zjawiskiem fazy nieminimalnej (ang. \emph{non-minimum phase}, NMP), polegającym na początkowej, odwrotnej do zamierzonej, reakcji napięcia wyjściowego na zmiany sygnału sterującego~\cite{tatari2024mfbb}.
 
 \section{Motywacja podjęcia tematu}
 \label{sec:motywacja}
 
-Obecne podejście do projektowania w~obszarze energoelektroniki opiera się w~znacznej mierze na wykorzystaniu komercyjnych, zamkniętych pakietów symulacyjnych, takich jak PSIM czy  MATLAB/Simulink. Narzędzia te sa bardzo cenione za wysoką precyzje oraz bogate biblioteki komponentów, jednak ich licencyjny i~zamknięty charakter jest źródłem pewnych limitów. Mówiac krótko choć skuteczne, nie przystają do dzisiejszych standardów inżynierii oprogramowania.
+Obecne podejście do projektowania w~obszarze energoelektroniki opiera się w~znacznej mierze na wykorzystaniu komercyjnych, zamkniętych pakietów symulacyjnych, takich jak PSIM czy MATLAB/Simulink. Narzędzia te są bardzo cenione za wysoką precyzję oraz bogate biblioteki komponentów, jednak ich komercyjny i~zamknięty charakter stwarza istotne ograniczenia z punktu widzenia współczesnych standardów inżynierii oprogramowania.
 
-Po pierwsze, ich monolityczna struktura skutecznie ogranicza swobodę modyfikacji algorytmów numerycznych, a także utrudnia integracjie ze współczesnymi bibliotekami obliczeniowymi czy też uczenia maszynowego.  Po drugie, koszty licencji powodują pewna bariere finansową utrudniającą reprodukcję wyników i~ich weryfikację przez niezależne zespoły badawcze. Po Wreszcie, projekty tworzone przy pomocy tego typo środowisk symulacyjnych są słabo poddają się standardowym praktykom inżynierii oprogramowania takich jak wersjonowanie, automatyzacja testów, czy też ciągła integracja.
+Po pierwsze, ich monolityczna struktura ogranicza swobodę modyfikacji algorytmów numerycznych, a także utrudnia bezpośrednią integrację ze współczesnymi bibliotekami obliczeniowymi oraz algorytmami sztucznej inteligencji. Po drugie, wysokie koszty licencji tworzą barierę utrudniającą reprodukcję wyników przez niezależne zespoły badawcze. Wreszcie, projekty tworzone w~zamkniętych pakietach symulacyjnych z~trudem poddają się standardowym praktykom inżynierii oprogramowania, takim jak wersjonowanie kodu, automatyzacja testów jednostkowych czy ciągła integracja (CI/CD).
 
-Alternatywa stanowi Język Python, który wraz z bibliotekami numerycznymi (NumPy, SciPy, Matplotlib) oraz uczenia maszynowego (scikit-learn, PyTorch) stanowi naturalne otwarte środowisko, które jest swietna odpowiedzia na te ograniczenia.
-% TODO cytat: podręcznik o NumPy / Pythonie naukowym (np. McKinney "Python
-% for Data Analysis", VanderPlas "Python Data Science Handbook" — jeśli
-% zdobędziesz egzemplarz lub e-book przez bibliotekę PW).
+Alternatywę stanowi język Python, który wraz z dojrzałym ekosystemem bibliotek numerycznych (NumPy~\cite{harris2020numpy}, Matplotlib~\cite{hunter2007matplotlib}) oraz optymalizacyjnych (PySwarms~\cite{miranda2018pyswarms}) tworzy otwarte, w~pełni rozszerzalne środowisko badawcze.
 
-Przeniesienie modeli energoelektronicznych do takiego ekosystemu otwiera możliwośċ bezpośredniej integracji z~metodami sztucznej inteligencji, czy też automatyzacji procesu strojenia sterowników.
-% TODO cytat: pozycja o stosowaniu uczenia maszynowego w energoelektronice
-% (np. Goodfellow et al. "Deep Learning" jako klasyk, lub aktualny artykuł
-% przeglądowy IEEE o ML w power electronics).
-Niniejsza praca podejmuje to wyzwanie, poprzez opracowanie modelu, który nie tylko jest poprawny fizycznie lecz również spełnia wysokie normy nowoczesnych standardów inżynierii oprogramowania jak jakość, modularność i~rozszerzalność powstałego kodu źródłowego.
+Przeniesienie modeli energoelektronicznych do takiego ekosystemu otwiera możliwość bezpośredniej integracji z~metodami sztucznej inteligencji oraz pełnej automatyzacji procesu strojenia sterowników. Niniejsza praca podejmuje to wyzwanie poprzez opracowanie modelu, który nie tylko jest poprawny fizycznie, lecz również spełnia wysokie standardy inżynierii oprogramowania, takie jak modularność, testowalność i~rozszerzalność powstałego kodu źródłowego.
 
 \section{Cel pracy}
 \label{sec:cel}
 
-\textbf{Celem pracy jest} zaprojektowanie oraz zaimplementowanie autorskiego \emph{Bliźniaka Cyfrowego} (ang. \emph{Digital Twin}) dwukierunkowego przekształtnika prądu stałego typu Buck-Boost w~języku Python, zintegrowanego z~bezmodelowym algorytmem sterowania typu Bang-Bang oraz metaheurystycznym algorytmem strojenia opartym o~Optymalizację Rojem Cząstek (ang. \emph{Particle Swarm Optimization}, PSO).
+\textbf{Celem pracy jest} zaprojektowanie oraz zaimplementowanie autorskiego \emph{Bliźniaka Cyfrowego} (ang. \emph{Digital Twin}) dwukierunkowego przekształtnika prądu stałego typu Boost w~języku Python, zintegrowanego z~bezmodelowym algorytmem sterowania typu Bang-Bang oraz metaheurystycznym algorytmem strojenia opartym o~Optymalizację Rojem Cząstek (ang. \emph{Particle Swarm Optimization}, PSO).
 
 Tak sformułowany cel obejmuje trzy dopełniające się aspekty:
 
@@ -59,20 +47,16 @@ Tak sformułowany cel obejmuje trzy dopełniające się aspekty:
 W~ramach realizacji postawionego celu zaplanowano i~wykonano następujące zadania programistyczne oraz badawcze:
 
 \begin{enumerate}
-	\item Inżynieria odwrotna referencyjnego obwodu Buck-Boost zaimplementowanego w~oprogramowaniu PSIM, prowadząca do wyprowadzenia kompletu równań różniczkowych opisujących każdy stan klucza energetycznego.
-	\item Opracowanie autorskiego silnika fizycznego symulatora opartego na numerycznej metodzie Eulera ze skrajnie krótkim krokiem całkowania, z~wykorzystaniem wektoryzowanych operacji biblioteki NumPy.
-	% TODO cytat: dokumentacja NumPy / podręcznik (jeśli pozyskasz)
+	\item Inżynieria odwrotna referencyjnego obwodu Boost zaimplementowanego w~oprogramowaniu PSIM, prowadząca do sformułowania i wyprowadzenia kompletu równań różniczkowych opisujących stan układu dla każdej konfiguracji kluczy półprzewodnikowych.
+	\item Opracowanie autorskiego silnika fizycznego symulatora opartego na numerycznej metodzie Eulera ze skrajnie krótkim krokiem całkowania ($\Delta t = 0{,}5~\mu\mathrm{s}$), z~wykorzystaniem wektoryzowanych operacji biblioteki NumPy~\cite{harris2020numpy}.
 	\item Implementacja bezmodelowej logiki sterowania Bang-Bang (MF-BB) zdolnej radzić sobie z~dynamiką fazy nieminimalnej, generującej sygnał odniesienia prądu cewki bezpośrednio z~mierzonych sygnałów obwodowych~\cite{tatari2024mfbb}.
-	\item Projekt i~implementacja metaheurystycznego algorytmu PSO dedykowanego do automatycznej optymalizacji parametrów sterownika MF-BB poprzez minimalizację autorskiej funkcji kosztu, penalizującej przeregulowania napięcia i~tętnienia prądu.
-	% TODO cytat: oryginalny artykuł Kennedy \& Eberhart 1995 (ICNN'95) —
-	% pozycja-klasyk PSO, dostępna w IEEE Xplore (DOI 10.1109/ICNN.1995.488968).
-	% Pozyskaj PDF zanim zacytujesz.
-	\item Przeprowadzenie analizy porównawczej przebiegów uzyskanych z~opracowanego symulatora względem przebiegów referencyjnych wyeksportowanych z~programu PSIM, jak również serii testów stress-testowych badających zachowanie układu w~warunkach skrajnie zmniejszonej pojemności kondensatora wyjściowego.
+	\item Integracja z algorytmem PSO~\cite{kennedy1995pso, shi1998pso} w oparciu o bibliotekę naukową \texttt{PySwarms}~\cite{miranda2018pyswarms}, dedykowanym do automatycznej, dwutorowej optymalizacji parametrów sterownika MF-BB poprzez minimalizację ważonej funkcji kosztu, penalizującej uchyby napięcia oraz tętnienia prądu.
+	\item Przeprowadzenie analizy porównawczej przebiegów uzyskanych z~opracowanego symulatora względem przebiegów referencyjnych wyeksportowanych z~programu PSIM, jak również serii testów badających odporność układu w~warunkach skrajnie zmniejszonej pojemności kondensatora wyjściowego.
 \end{enumerate}
 
 \section{Oczekiwane rezultaty}
 \label{sec:rezultaty}
-Zwieńczeniem tego projektu będzie dostarczenie w pełni działającej aplikacji w~języku Python, zdolnej do precyzyjnego symulowania układu Buck-Boost z~rozdzielczością czasową rzędu pojedynczych mikrosekund. Publiczna dostępność kodu w systemie kontroli wersji Git, zapewni pełną transparentność i~reprodukowalność uzyskanych wyników.Wiarygodność narzędzia zostanie  wykazana poprzez nałożenie sygnałów napięcia i~prądu na dane referencyjne z~oprogramowania PSIM. Część badawcza pracy ma na celu wykazanie skuteczności metody PSO w~zautomatyzowanej redukcji tętnień napięcia wyjściowego oraz przeregulowań w~warunkach pracy z~małymi pojemnościami filtra, stanowiąc efektywną alternatywę dla manualnego strojenia kontrolerów.
+Zwieńczeniem tego projektu jest dostarczenie w pełni działającej aplikacji w~języku Python, zdolnej do precyzyjnego symulowania układu Boost z~rozdzielczością czasową rzędu pojedynczych mikrosekund. Publiczna dostępność kodu w systemie kontroli wersji Git~\cite{chacon2014progit} zapewnia pełną transparentność i~reprodukowalność uzyskanych wyników. Wiarygodność narzędzia została wykazana poprzez bezpośrednie numeryczne nałożenie sygnałów napięcia i~prądu na dane referencyjne z~oprogramowania PSIM. Część badawcza pracy wykazuje skuteczność metody PSO w~zautomatyzowanej redukcji tętnień napięcia wyjściowego oraz zapadów w~warunkach pracy z~małymi pojemnościami filtra, stanowiąc efektywną alternatywę dla manualnego strojenia kontrolerów.
 
 \section{Założenia architektoniczne}
 \label{sec:zalozenia}
@@ -82,11 +66,11 @@ Praca powstaje w~ramach kierunku Informatyka Stosowana, co determinuje szczegól
 \begin{itemize}
 	\item \emph{warstwa fizyki obwodowej} -- klasy reprezentujące parametry, stany i~równania ruchu przekształtnika, niezależne od logiki sterowania;
 	\item \emph{warstwa sterowania} -- klasy implementujące algorytmy regulacji (MF-BB), operujące wyłącznie na zdefiniowanych interfejsach pomiarowych;
-	\item \emph{warstwa optymalizacji} -- klasy realizujące algorytm PSO, traktujące pętlę symulacyjną jako zewnętrzny obiekt-funkcję celu;
+	\item \emph{warstwa optymalizacji} -- moduły realizujące algorytm PSO we współpracy z biblioteką \texttt{PySwarms}, traktujące pętlę symulacyjną jako deterministyczną funkcję celu;
 	\item \emph{warstwa eksperymentu i~wizualizacji} -- moduły uruchomieniowe oraz prezentacyjne, oddzielone od logiki rdzenia.
 \end{itemize}
 
-Taka separacja funkcjonalności umożliwia niezależną ewolucję komponentów, na przykład zastąpienie sterownika MF-BB regulatorem PI, bez ingerencji w~pozostałe warstwy.Wykorzystanie systemu Git do zarządzania kodem źródłowym, pozwala na precyzyjne śledzenie ewolucji projektu oraz dokumentowanie kolejnych etapów eksperymentów.
+Taka separacja funkcjonalności umożliwia niezależną ewolucję komponentów, na przykład zastąpienie sterownika MF-BB regulatorem PI czy MPC, bez ingerencji w~pozostałe warstwy. Wykorzystanie systemu Git~\cite{chacon2014progit} do zarządzania kodem źródłowym pozwala na precyzyjne śledzenie ewolucji projektu oraz dokumentowanie kolejnych etapów eksperymentów.
 
 \section{Struktura pracy}
 \label{sec:struktura}
