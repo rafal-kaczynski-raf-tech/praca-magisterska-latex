@@ -8,12 +8,7 @@
 \section{Dwukierunkowe przetwornice DC-DC w~mikrosieciach}
 \label{sec:przetwornice}
 
-Współczesna transformacja sektora energetycznego, napędzana zarówno wymaganiami klimatycznymi, jak~i~ekonomiką rozproszonego wytwarzania, doprowadziła do~upowszechnienia tzw.~\emph{mikrosieci prądu stałego} (ang.~\emph{DC microgrids}) jako struktur pośredniczących między~źródłami odnawialnymi (panele fotowoltaiczne, ogniwa paliwowe), magazynami energii (akumulatory, superkondensatory) oraz odbiornikami końcowymi. W~strukturach tych kluczową rolę funkcjonalną pełnią przekształtniki DC-DC, zapewniające dopasowanie poziomów napięcia, sterowanie przepływem mocy oraz separację galwaniczną poszczególnych segmentów sieci.
-
-% TODO cytat: przegladowa monografia mikrosieci DC (np. Kakigano, Miura, Ise
-% "Low-Voltage Bipolar-Type DC Microgrid for Super High Quality Distribution",
-% IEEE Trans. Power Electron., 2010 lub Dragicevic et al. "DC Microgrids -- Part I/II",
-% IEEE Trans. Power Electron., 2016). Rafal nie ma PDF -- TODO.
+Współczesna transformacja sektora energetycznego, napędzana zarówno wymaganiami klimatycznymi, jak~i~ekonomiką rozproszonego wytwarzania, doprowadziła do~upowszechnienia tzw.~\emph{mikrosieci prądu stałego} (ang.~\emph{DC microgrids}) jako struktur pośredniczących między~źródłami odnawialnymi (panele fotowoltaiczne, ogniwa paliwowe), magazynami energii (akumulatory, superkondensatory) oraz odbiornikami końcowymi~\cite{dragicevic2016}. W~strukturach tych kluczową rolę funkcjonalną pełnią przekształtniki DC-DC, zapewniające dopasowanie poziomów napięcia, sterowanie przepływem mocy oraz separację galwaniczną poszczególnych segmentów sieci.
 
 Spośród szerokiej rodziny topologii konwersji DC-DC szczególne znaczenie w~zastosowaniach mikrosieciowych zyskała \emph{synchroniczna topologia podwyższająco-obniżająca} (ang.~\emph{synchronous Buck-Boost}), w~której klasyczne pasywne elementy prostownicze (diody) zastąpiono w~pełni sterowanymi kluczami półprzewodnikowymi. Dzięki temu zabiegowi przekształtnik uzyskuje zdolność do~\emph{dwukierunkowego} przepływu energii -- może~zarówno podwyższać napięcie ze~źródła do~szyny mikrosieci (tryb \emph{boost}, np.~ładowanie szyny z~ogniwa fotowoltaicznego), jak~i~odwracać kierunek przepływu (tryb \emph{buck}, np.~ładowanie magazynu energii ze~szyny mikrosieci). Zasada działania, równania stanu oraz analizę topologiczną dla~obu trybów pracy przedstawia klasyczna monografia~Ericksona i~Maksimovicia~\cite{erickson2020}.
 
@@ -30,10 +25,6 @@ Bezpośrednią fizyczną przyczyną występowania zera RHP w~topologii \emph{boo
 
 Z~punktu widzenia projektanta układu sterowania, dynamika NMP stwarza fundamentalne ograniczenie pasma regulatora liniowego. Klasyczna teoria układów regulacji pokazuje bowiem, że~pasmo przepustowości pętli zamkniętej dla~układu z~zerem RHP w~częstotliwości~$\omega_{\mathrm{RHP}}$ jest~ograniczone od~góry wartością $\omega_{\mathrm{BW}} \lesssim \omega_{\mathrm{RHP}}/2$~\cite{erickson2020}. Próby wymuszenia szybszej odpowiedzi prowadzą nieuchronnie do~utraty stabilności pętli zamkniętej, niezależnie od~sofistykacji algorytmu strojenia regulatora. W~praktycznych zastosowaniach mikrosieciowych, w~których wymagana jest~szybka reakcja na~zaburzenia obciążenia, ograniczenie to~staje się głównym czynnikiem limitującym jakość regulacji klasycznymi metodami liniowymi.
 
-% TODO cytat: monograficzne ujecie ograniczen NMP w teorii regulacji (np. Skogestad,
-% Postlethwaite "Multivariable Feedback Control: Analysis and Design", 2nd ed., 2005,
-% rozdz. 5.7 -- "Limitations imposed by RHP-zeros"). Rafal nie ma PDF -- TODO.
-
 Powyższe ograniczenie stanowi pierwotną motywację dla~poszukiwania nieliniowych strategii sterowania, które~potrafiłyby ominąć ograniczenie wprowadzane przez~zero RHP. W~rozwiązaniach predykcyjnych (FS-MPC) ominięcie to~odbywa się poprzez~bezpośrednie modelowanie odpowiedzi nieliniowej w~ramach skończonego horyzontu predykcji~\cite{tatari2025splitcost}, natomiast w~bezmodelowych strategiach Bang-Bang (MF-BB) -- przez~bezpośrednią obserwację kierunku zmian sygnałów wyjściowych bez~próby formalnego modelowania pełnej dynamiki przekształtnika~\cite{tatari2024mfbb}. Obie te~strategie omawiane są~szczegółowo w~dalszej części niniejszego rozdziału.
 
 \section{Klasyczne metody regulacji}
@@ -49,11 +40,7 @@ Strukturalnie najpopularniejsze podejście do~regulacji przekształtników podwy
     u(t) = K_p\,e(t) + K_i\int_0^{t} e(\tau)\,\mathrm{d}\tau,
     \label{eq:pi-cont}
 \end{equation}
-gdzie $e(t)$~jest~uchybem regulacji, a~$K_p$, $K_i$~są~wzmocnieniami członu proporcjonalnego i~całkującego. W~praktyce cyfrowej implementacji równanie to~jest~dyskretyzowane (najczęściej metodą trapezów lub~Eulera w~tył), a~jego wykonanie odbywa się synchronicznie z~okresem próbkowania regulatora~$T_{s,\mathrm{ctrl}}$.
-
-% TODO cytat: standardowa monografia teorii regulacji (Ogata K. "Modern Control Engineering",
-% 5th ed., Pearson 2010 lub Astrom K., Murray R. "Feedback Systems: An Introduction
-% for Scientists and Engineers", Princeton 2008). Rafal nie ma PDF -- TODO.
+gdzie $e(t)$~jest~uchybem regulacji, a~$K_p$, $K_i$~są~wzmocnieniami członu proporcjonalnego i~całkującego~\cite{astrom2008}. W~praktyce cyfrowej implementacji równanie to~jest~dyskretyzowane (najczęściej metodą trapezów lub~Eulera w~tył), a~jego wykonanie odbywa się synchronicznie z~okresem próbkowania regulatora~$T_{s,\mathrm{ctrl}}$.
 
 W~kontekście dwukierunkowych przetwornic DC-DC pracujących w~mikrosieciach, regulatory PI cierpią na~cztery zasadnicze ograniczenia:
 \begin{enumerate}
@@ -106,11 +93,7 @@ Sterowanie Bang-Bang (synonimicznie określane jako~sterowanie histerezowe lub~p
 
 Klasyczne, niekompensowane sterowanie histerezowe -- znane w~literaturze pod~angielską nazwą \emph{hysteretic current control} -- jest~najprostszym wariantem rodziny: klucz dolny włącza się, gdy~mierzona wartość prądu cewki spadnie poniżej~progu dolnego $i_L^{*} - \Delta i/2$, a~wyłącza, gdy~przekroczy próg górny $i_L^{*} + \Delta i/2$. Szerokość pasma histerezy~$\Delta i$ jest~głównym parametrem strojącym, jednoznacznie wyznaczającym amplitudę tętnień prądu cewki oraz, pośrednio, średnią częstotliwość przełączeń~\cite{tatari2024mfbb}.
 
-Główną wadą podejścia niekompensowanego jest~silna zależność średniej częstotliwości przełączania~$f_{\mathrm{sw}}$ od~bieżącego napięcia wejściowego, napięcia wyjściowego oraz~indukcyjności cewki, co~prowadzi do~znacznego rozrzutu widma EMI oraz~utrudnia projektowanie sekcji filtrującej. \emph{Skompensowane} sterowanie Bang-Bang adresuje ten~problem przez~wprowadzenie adaptacyjnej modyfikacji progów przełączania, której postać zależy od~aktualnego punktu pracy układu. W~typowej implementacji szerokość pasma histerezy jest~dynamicznie korygowana proporcjonalnie do~$f(V_{\mathrm{in}}, V_{\mathrm{out}})$, tak~aby częstotliwość przełączeń pozostawała w~przybliżeniu stała niezależnie od~stanu pracy.
-
-% TODO cytat: klasyczna praca o kompensowanym sterowaniu histerezowym
-% (np. Bose B.K. "Modern Power Electronics and AC Drives", Prentice Hall 2001
-% lub konkretna praca Iwanski/Tatari, jezeli rozszerzaja temat). Rafal nie ma PDF -- TODO.
+Główną wadą podejścia niekompensowanego jest~silna zależność średniej częstotliwości przełączania~$f_{\mathrm{sw}}$ od~bieżącego napięcia wejściowego, napięcia wyjściowego oraz~indukcyjności cewki, co~prowadzi do~znacznego rozrzutu widma EMI oraz~utrudnia projektowanie sekcji filtrującej. \emph{Skompensowane} sterowanie Bang-Bang adresuje ten~problem przez~wprowadzenie adaptacyjnej modyfikacji progów przełączania, której postać zależy od~aktualnego punktu pracy układu~\cite{tatari2024mfbb}. W~typowej implementacji szerokość pasma histerezy jest~dynamicznie korygowana proporcjonalnie do~$f(V_{\mathrm{in}}, V_{\mathrm{out}})$, tak~aby częstotliwość przełączeń pozostawała w~przybliżeniu stała niezależnie od~stanu pracy.
 
 \subsection{Sterowanie Bang-Bang z~podwojoną częstotliwością próbkowania}
 \label{subsec:bb-double}
@@ -188,7 +171,7 @@ Wybór algorytmu PSO (Particle Swarm Optimization) jako narzędzia optymalizacji
     
     \item \textbf{Sprawdzona skuteczność w~strojeniu kontrolerów} -- literatura tematu (m.in.~artykuły Tatariego i~Iwańskiego) uzasadnia wybór PSO dla~problemu strojenia histerezowych regulatorów energoelektronicznych, wskazując na~zbieżność do~rozwiązań porównywalnych z~klasycznymi metodami optimizacyjnymi.
     
-    \item \textbf{Duża popularność i~dojrzałość implementacyjna} -- algorytm PSO jest~stosunkowo prosty do~implementacji od~podstaw (co~omawiane będzie w~rozdziale~\ref{ch:ai}), a~jednocześnie na~tyle dobrze~znany, że~nie~wymaga formalnego dowodu zbieżności czy~uzasadniania wyboru w~dyskusjach naukowych.
+    \item \textbf{Duża popularność i~dojrzałość implementacyjna} -- algorytm PSO jest~powszechnie uznanym standardem w~inżynierii optymalizacyjnej, a~jego integracja z~wykorzystaniem dedykowanej biblioteki naukowej (co~omawiane będzie w~rozdziale~\ref{ch:ai}) zapewnia pełną powtarzalność i~stabilność procesu strojenia.
 \end{enumerate}
 
-Strategia pracy realizowana w~niniejszym projekcie wynika naturalnie z~powyższych analiz: (i)~implementacja bliźniaka cyfrowego MF-BB w~języku Python z~jawnym modelowaniem dynamiki przekształtnika, (ii)~strojenie parametrów $(w_i, f_c)$ za~pomocą PSO poprzez~systematyczną ewaluację pięciu konkurujących funkcji kosztu (omówionych w~rozdziale~\ref{ch:ai}), oraz~(iii)~walidacja wyników w~środowisku referencyjnym PSIM w~celu potwierdzenia transferu wiedzy z~systemu zmodelowanego. Szczegółowa implementacja oraz~wyniki eksperymentów stanowią zawartość następnych czterech rozdziałów niniejszej pracy.
+Strategia pracy realizowana w~niniejszym projekcie wynika naturalnie z~powyższych analiz: (i)~implementacja bliźniaka cyfrowego MF-BB w~języku Python z~jawnym modelowaniem dynamiki przekształtnika, (ii)~strojenie parametrów $(w_i, f_c)$ za~pomocą PSO poprzez~systematyczną ewaluację funkcji kosztu (omówionych w~rozdziale~\ref{ch:ai}), oraz~(iii)~walidacja wyników w~środowisku referencyjnym PSIM w~celu potwierdzenia transferu wiedzy z~systemu zmodelowanego. Szczegółowa implementacja oraz~wyniki eksperymentów stanowią zawartość kolejnych rozdziałów niniejszej pracy.
