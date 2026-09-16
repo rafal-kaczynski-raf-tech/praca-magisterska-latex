@@ -38,7 +38,7 @@ Mając na uwadze badawczy profil projektu oraz standardy czystego kodu, sformuł
     \item \textbf{N7 (otwartość).} Oparcie architektury wyłącznie na darmowych i otwartoźródłowych bibliotekach naukowo-badawczych ekosystemu Python -- w szczególności NumPy~\cite{harris2020numpy} oraz Matplotlib~\cite{hunter2007matplotlib} -- w celu wyeliminowania ograniczeń licencyjnych właściwych dla komercyjnego oprogramowania inżynierskiego.
 \end{itemize}
 
-Wprowadzone kryteria posiadają wymierny charakter i stanowią podstawę do weryfikacji poprawności działania oprogramowania na każdym etapie jego implementacji. W dalszej części tego rozdziału przedstawiono szczegóły implementacyjne realizujące poszczególne punkty: spełnienie założenia \textbf{N1} wykazano w sekcji~\nameref{sec:walidacja-fizyki}, koncepcję modułowości (\textbf{N4}) opisuje sekcja~\nameref{sec:architektura}, natomiast kwestie kontroli wersji (\textbf{N5}) porusza sekcja~\nameref{sec:repo}.
+Wprowadzone kryteria posiadają wymierny charakter i stanowią podstawę do weryfikacji poprawności działania oprogramowania na każdym etapie jego implementacji. W dalszej części tego rozdziału przedstawiono szczegóły implementacyjne realizujące poszczególne punkty: spełnienie założenia \textbf{N1} wykazano w rozdziale~\ref{ch:badania}, koncepcję modułowości (\textbf{N4}) opisuje sekcja~\nameref{sec:architektura}, natomiast kwestie kontroli wersji (\textbf{N5}) porusza sekcja~\nameref{sec:repo}.
 
 \section{Inżynieria odwrotna obwodu z~programu PSIM}
 \label{sec:reverse-eng}
@@ -124,7 +124,7 @@ Skuteczna realizacja założeń projektowych w~zakresie modułowości~(\textbf{N
 \subsection{Paradygmat programowania obiektowego}
 \label{subsec:oop}
 
-Wstępna, prototypowa implementacja symulatora została wykonana w~konwencji proceduralnej. Całość logiki -- obejmująca definicje parametrów, zmienne stanu obwodu, algorytm sterowania oraz procedury zapisu danych -- została wówczas skupiona wewnątrz jednej funkcji \texttt{simulate()}. Choć rozwiązanie to pozwoliło na~szybką walidację modelu w~relacji 1:1 z~oprogramowaniem PSIM (\nameref{sec:walidacja-fizyki}), generowało ono poważne bariery w~kontekście dalszego rozwoju aplikacji. Silne powiązanie poszczególnych warstw uniemożliwiało izolowane testowanie komponentów, a~wykorzystanie globalnych zmiennych stanu wykluczało bezpieczne, wielokrotne uruchamianie kodu w~pętli optymalizacyjnej algorytmu PSO.
+Wstępna, prototypowa implementacja symulatora została wykonana w~konwencji proceduralnej. Całość logiki -- obejmująca definicje parametrów, zmienne stanu obwodu, algorytm sterowania oraz procedury zapisu danych -- została wówczas skupiona wewnątrz jednej funkcji \texttt{simulate()}. Choć rozwiązanie to pozwoliło na~szybką walidację modelu w~relacji 1:1 z~oprogramowaniem PSIM (opisanej szczegółowo w~rozdziale~\ref{ch:badania}), generowało ono poważne bariery w~kontekście dalszego rozwoju aplikacji. Silne powiązanie poszczególnych warstw uniemożliwiało izolowane testowanie komponentów, a~wykorzystanie globalnych zmiennych stanu wykluczało bezpieczne, wielokrotne uruchamianie kodu w~pętli optymalizacyjnej algorytmu PSO.
 
 Z~tego względu, po~zakończeniu fazy weryfikacji fizycznej, strukturę kodu zrefaktoryzowano do~postaci obiektowej. Zastosowanie paradygmatu OOP pozwoliło na~osiągnięcie następujących korzyści:
 
@@ -189,7 +189,7 @@ Wybór tego -- w~teorii najprostszego -- algorytmu był podyktowany trzema klucz
     \item \textbf{zapas stabilności numerycznej.} Warunkiem zachowania stabilności jawnej metody Eulera dla obwodów o~charakterze sztywnym jest utrzymanie relacji $\Delta t\ll\tau_{\min}$, gdzie $\tau_{\min}$ to najkrótsza skala czasowa układu (okres oscylacji bądź stała czasowa). Najszybszą dynamiką w~badanym obwodzie cechuje się obwód rezonansowy $LC$ o~częstotliwości własnej $f_0=1/(2\pi\sqrt{LC})\approx 411~\mathrm{Hz}$ (okres $T_0\approx 2{,}43~\mathrm{ms}$), podczas gdy najkrótsza z~dyssypacyjnych stałych czasowych wynosi $\tau_L=L/R_L=15~\mathrm{ms}$. Zastosowanie kroku $\Delta t=0{,}5~\mu\mathrm{s}$ zapewnia proporcję $T_0/\Delta t\approx 4860$, co~gwarantuje margines stabilności o~trzy rzędy wielkości większy, niż jest to bezwzględnie wymagane.
 \end{itemize}
 
-Wartość interwału $\Delta t=0{,}5~\mu\mathrm{s}$ została dobrana zgodnie z~kryterium \textbf{N2} (sekcja~\nameref{sec:wymagania}), definiującym limit na~poziomie $1~\mu\mathrm{s}$. Ustalenie kroku o~połowę krótszego od~dopuszczalnego maksimum pozwala uzyskać zadowalającą wierność odwzorowania stanów przejściowych, a~jednocześnie idealnie synchronizuje się z~okresem próbkowania mikrokontrolera $T_s=10~\mu\mathrm{s}$. Oznacza to, że~na każdy cykl algorytmu sterującego przypada równo $N_{phys}=T_s/\Delta t=20$ kroków numerycznych, co~eliminuje konieczność wprowadzania interpolacji pomiędzy warstwą fizyki a~warstwą decyzyjną. Choć teoretyczny, globalny błąd metody Eulera narasta proporcjonalnie do~wielkości kroku $\mathcal{O}(\Delta t)$~\cite{hairer1993}, jego rzeczywista akumulacja jest redukowana przez naturalne tłumienie rezystancyjne układu, a~jej praktyczne znaczenie ograniczone przez stosunkowo niewielki krok całkowania. Poprawność takiego założenia została empirycznie potwierdzona w~procesie walidacji (sekcja~\nameref{sec:walidacja-fizyki}).
+Wartość interwału $\Delta t=0{,}5~\mu\mathrm{s}$ została dobrana zgodnie z~kryterium \textbf{N2} (sekcja~\nameref{sec:wymagania}), definiującym limit na~poziomie $1~\mu\mathrm{s}$. Ustalenie kroku o~połowę krótszego od~dopuszczalnego maksimum pozwala uzyskać zadowalającą wierność odwzorowania stanów przejściowych, a~jednocześnie idealnie synchronizuje się z~okresem próbkowania mikrokontrolera $T_s=10~\mu\mathrm{s}$. Oznacza to, że~na każdy cykl algorytmu sterującego przypada równo $N_{phys}=T_s/\Delta t=20$ kroków numerycznych, co~eliminuje konieczność wprowadzania interpolacji pomiędzy warstwą fizyki a~warstwą decyzyjną. Choć teoretyczny, globalny błąd metody Eulera narasta proporcjonalnie do~wielkości kroku $\mathcal{O}(\Delta t)$~\cite{hairer1993}, jego rzeczywista akumulacja jest redukowana przez naturalne tłumienie rezystancyjne układu, a~jej praktyczne znaczenie ograniczone przez stosunkowo niewielki krok całkowania. Poprawność takiego założenia została empirycznie potwierdzona w~procesie walidacji (rozdział~\ref{ch:badania}).
 
 \subsection{Implementacja równań stanu przetwornicy}
 \label{subsec:rownania}
@@ -249,107 +249,50 @@ Po~wdrożeniu powyższych rozwiązań czas potrzebny na~wygenerowanie pełnego p
 
 Należy dodać, że~świadomie zrezygnowano z~agresywniejszych metod akceleracji, w~tym kompilacji \emph{Just-In-Time} (Numba) lub translacji rozszerzeń do~C (\texttt{Cython}). Decyzja ta podyktowana była troską o~czystość architektury kodu i~zapewnienie łatwej portowalności bez angażowania zewnętrznych kompilatorów. Wypracowane czasy wykonania w~pełni zaspokajają bieżące potrzeby, podczas gdy bardziej skomplikowane ramy uruchomieniowe pozostają otwartą furtką dla ewentualnych przyszłych prac nad wielomilionowymi iteracjami lub zrównolegleniem rozproszonym.
 
-\section{Walidacja silnika fizycznego}
-\label{sec:walidacja-fizyki}
-
-Weryfikacja założenia jakościowego~\textbf{N1} (zdefiniowanego w~sekcji~\nameref{sec:wymagania}) -- nakładającego rygor uzyskania zbieżności pomiędzy autorskim środowiskiem symulacyjnym a~referencyjnym oprogramowaniem PSIM na~poziomie przekraczającym $99~\%$ -- stanowiła jeden z~kluczowych etapów ewaluacji całego projektu. W~niniejszym rozdziale szczegółowo opisano dwutorową procedurę badawczą, którą opracowano w~celu ostatecznego potwierdzenia rzetelności obliczeniowej zaimplementowanego silnika fizycznego. Metodyka ta obejmuje \emph{walidację globalną}, bazującą na~analizie porównawczej kompletnych przebiegów w~zamkniętej pętli sprzężenia zwrotnego, oraz nowatorski \emph{test odtworzeniowy} (\emph{replay test}), w~ramach którego wyizolowany rdzeń obwodowy w~języku Python poddano wymuszeniu za pomocą zrekonstruowanego ciągu impulsów sterujących bezpośrednio z~programu PSIM.
-
-\subsection{Konfiguracja środowiska testowego}
-\label{subsec:walidacja-setup}
-
-Eksperymenty porównawcze przeprowadzono przy uwzględnieniu nastaw dyskretyzacji wynikających z~Kroku~2.6 procedur przygotowawczych. W~konfiguracji numerycznej przyjęto krok całkowania $\Delta t=0{,}5~\mu\mathrm{s}$, czas kroku obliczeniowego mikrokontrolera $T_s=10~\mu\mathrm{s}$ oraz globalny horyzont czasowy symulacji $T_{end}=100~\mathrm{ms}$ (co~generuje łączną pulę iteracji rzędu $N_{steps}=2\cdot 10^5$). Tożsame parametry fizyczne komponentów obwodu oraz współczynniki regulatora zostały zaimplementowane w~obu platformach programistycznych (zgodnie z~zależnościami z~sekcji~\nameref{subsec:parametry}). Komplet przebiegów analitycznych wyznaczono w~oparciu o~ten sam algorytm regulacji MF-BB, który rozbudowano o~funkcję predykcji prądu wyjściowego oraz cyfrowy filtr Butterwortha drugiego rzędu o~częstotliwości odcięcia $f_c=2~\mathrm{kHz}$. Kwantyfikacji wskaźników jakościowych dokonano w~oknie czasowym $t\in[80,\,100]~\mathrm{ms}$, odpowiadającym w~pełni ustalonej fazie pracy układu.
-
-\subsection{Ocena globalna w~ustalonym punkcie pracy}
-\label{subsec:walidacja-globalna}
-
-Pierwszy etap procesu dowodowego polegał na~bezpośrednim nałożeniu charakterystyk czasowych uzyskanych z~rdzenia Python na~dane pomiarowe wyeksportowane ze~środowiska referencyjnego PSIM. W~obu przypadkach wymuszono realizację identycznego scenariusza dynamicznego przy aktywnej strukturze sprzężenia zwrotnego. Zestawienie kluczowych parametrów ilościowych dla wyznaczonego stanu ustalonego zaprezentowano w~tabeli~\ref{tab:metryki-walidacji}, natomiast pełne przebiegi czasowe obu środowisk zestawiono na~rys.~\ref{fig:walidacja-full}.
-
-\begin{table}[ht]
-    \centering
-    \caption{Tabela porównawcza wskaźników ustalonego punktu pracy ($t\in[80,\,100]~\mathrm{ms}$) dla autorskiej implementacji Python względem środowiska PSIM.}
-    \label{tab:metryki-walidacji}
-    \begin{tabular}{lrrrr}
-        \hline
-        \textbf{Analizowany wskaźnik} & \textbf{PSIM} & \textbf{Python} & \textbf{Odchylenie $\Delta$} & \textbf{Błąd wzgl. $\Delta~\%$} \\
-        \hline
-        Średnie napięcie wyjściowe $u_{dc}$ [V] & $239{,}606$ & $239{,}493$ & $-0{,}113$ & $-0{,}05~\%$ \\
-        Wahania $u_{dc}$ międzyszczytowe [V]         & $1{,}055$   & $1{,}086$   & $+0{,}031$ & $+2{,}98~\%$ \\
-        Średni prąd dławika $i_L$ [A]           & $12{,}026$  & $12{,}072$  & $+0{,}046$ & $+0{,}38~\%$ \\
-        Maksymalny prąd dławika $i_L$ [A]            & $14{,}614$  & $14{,}693$  & $+0{,}079$ & $+0{,}54~\%$ \\
-        Uśrednione wypełnienie $D$              & $0{,}5852$  & $0{,}5850$  & $-0{,}0002$ & $-0{,}04~\%$ \\
-        Predykcja prądu obciążenia $\hat{i}_{out}$ [A] & $4{,}985$ & $5{,}010$ & $+0{,}024$ & $+0{,}49~\%$ \\
-        \hline
-    \end{tabular}
-\end{table}
-
-Zaprezentowane zestawienie danych stanowi jednoznaczne potwierdzenie spełnienia kryterium~\textbf{N1}. Główne parametry makroskopowe układu regulacji, takie jak wartość średnia napięcia na kondensatorze $u_{dc}$ czy globalny współczynnik wypełnienia impulsów $D$, generują błędy symulacji na poziomie zaledwie ułamków promila (odpowiednio $-0{,}05~\%$ oraz $-0{,}04~\%$). Wynik ten ponad dwudziestokrotnie przewyższa założony próg dokładnościowy. Co więcej, estymacja zmiennych prądowych ($i_L$ oraz $\hat{i}_{out}$) wykazuje odchyłkę nieprzekraczającą poziomu $0{,}5~\%$. Jedyną mierzalną rozbieżnością jest niewielki wzrost tętnień napięcia międzyszczytowego ($+2{,}98~\%$), jednak zjawisko to stanowi naturalną konsekwencję występowania dyskretnych przesunięć fazowych (\emph{jitter}) w~zdarzeniach logicznych sterownika cyfrowego, co~w~żaden sposób nie wpływa negatywnie na ogólną poprawność śledzenia trajektorii stanu modelu.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.95\textwidth]{rysunki/porownanie_bb_estim_full_psim.png}
-    \caption{Porównanie pełnych przebiegów napięcia wyjściowego $u_{dc}$ oraz prądu dławika $i_L$
-             pomiędzy autorskim symulatorem Python (linia niebieska) a~modelem referencyjnym PSIM
-             (linia czerwona) w~horyzoncie $T_{end}=100~\mathrm{ms}$.}
-    \label{fig:walidacja-full}
-\end{figure}
-
-Sformułowanie pogłębionych wniosków w zakresie dynamiki komutacji stało się możliwe dzięki szczegółowej analizie przebiegów w oknie powiększonym (\emph{zoom}) wewnątrz rejonu stanu ustalonego (rys.~\ref{fig:walidacja-zoom}). Wysoka rozdzielczość podglądu pozwala na precyzyjną weryfikację korelacji czasowych oraz zboczy narastających sekwencji PWM wraz z ich profilami pulsacji, co wyklucza występowanie długoterminowego dryftu (\emph{drift}) pomiędzy omawianymi narzędziami.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.95\textwidth]{rysunki/porownanie_bb_estim_zoom.png}
-    \caption{Zbliżenie przebiegów $u_{dc}$ oraz $i_L$ w~ustalonym punkcie pracy umożliwiające
-             obserwację indywidualnych okresów przełączeń sterownika.}
-    \label{fig:walidacja-zoom}
-\end{figure}
-
-\subsection{Procedura testu odtworzeniowego}
-\label{subsec:replay-test}
-
-Ocena globalna przy zamkniętej pętli sprzężenia zwrotnego -- choć odzwierciedla docelowy scenariusz aplikacyjny -- uniemożliwia precyzyjne wyizolowanie źródła potencjalnych rozbieżności obliczeniowych. W takim układzie trudne staje się jednoznaczne określenie, jaka część błędu wynika bezpośrednio z działania całkującego jądra numerycznego, a jaka jest generowana przez niuanse implementacyjne samego algorytmu sterowania. Rozwiązaniem tego problemu metodologicznego stało się wdrożenie procedury weryfikacyjnej znanej w literaturze przedmiotu jako \emph{test odtworzeniowy} (\emph{replay test}).
-
-Głównym założeniem tej metody było programowe odłączenie modułu regulatora MF-BB i zastąpienie go funkcją wymuszającą, która zasilała model fizyczny historycznym wektorem sygnału sterującego $s(t)$, wyekstrahowanym uprzednio z dziennika symulacji PSIM. Ponieważ natywny plik CSV z oprogramowania referencyjnego posiadał rozdzielczość ograniczoną do makrokroku $10~\mu\mathrm{s}$, stany kluczujące dla wyższej rozdzielczości $\Delta t=0{,}5~\mu\mathrm{s}$ odtworzono na podstawie znaku pierwszej pochodnej przebiegu prądu dławika ($\mathrm{sgn}(\mathrm{d}i_L/\mathrm{d}t)$). Dodatnia wartość pochodnej oznaczała załączenie tranzystora ($s=1$), natomiast ujemna -- jego rozwarcie ($s=0$). Tak przygotowany wektor logiczny posłużył jako bezpośrednie wymuszenie dla zaimplementowanej w Pythonie klasy \texttt{Converter}. Uzyskane tą drogą tory fazowe $i_L^{py}(t)$ oraz $u_{dc}^{py}(t)$ porównano bezpośrednio z trajektoriami referencyjnymi $i_L^{psim}(t)$ i~$u_{dc}^{psim}(t)$.
-
-Zastosowane podejście pozwoliło na niezależną walidację poprawności matematycznej równań stanu obwodu~\eqref{eq:state-unified} oraz działania dyskretyzacji czasowej jawnej metody Eulera~\eqref{eq:euler-forward}, całkowicie uniezależniając proces od dynamiki pętli regulacji. Na podstawie analizy statystycznej próbki obejmującej $14$ rozłącznych interwałów czasowych -- reprezentujących zarówno stany statyczne, jak i stany przejściowe o wysokiej dynamice łącznikowej -- wyznaczono następujące mediany maksymalnych błędów bezwzględnych:
-\begin{equation*}
-    \mathrm{med}\bigl(\max|i_L^{py}-i_L^{psim}|\bigr) \approx 3~\mathrm{mA},\qquad
-    \mathrm{med}\bigl(\max|u_{dc}^{py}-u_{dc}^{psim}|\bigr) \approx 0{,}31~\mathrm{V}.
-\end{equation*}
-
-Odnosząc te wartości do znamionowych poziomów prądów i napięć (odpowiednio $12~\mathrm{A}$ oraz $240~\mathrm{V}$), stwierdzone odchyłki przekładają się na błąd względny rzędu zaledwie $0{,}03~\%$ dla prądu oraz $0{,}13~\%$ dla napięcia. Graficzną ilustrację zgodności trajektorii dla wybranych segmentów czasowych przedstawiono na~rys.~\ref{fig:replay-test}. Wynik ten jednoznacznie wskazuje, że opracowane w języku Python jądro obliczeniowe stanowi wierną i precyzyjną implementację algorytmów numerycznych środowiska PSIM, obarczoną jedynie inherentnym błędem metody całkowania. Obserwowane we wcześniejszym podrozdziale~\nameref{subsec:walidacja-globalna} drobne rozbieżności należy zatem przypisać wyłącznie minimalnej akumulacji różnic na granicy stref przełączeń regulatora.
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.95\textwidth]{rysunki/dowod_zgodnosci_fizyki_psim.png}
-    \caption{Wynik testu odtworzeniowego: porównanie przebiegów $i_L$ oraz $u_{dc}$ autorskiego
-             silnika fizycznego (Python) z~referencyjnym przebiegiem PSIM przy identycznym sygnale
-             przełączeń, dla wybranych segmentów czasowych.}
-    \label{fig:replay-test}
-\end{figure}
-
-\subsection{Wnioski końcowe procesu certyfikującego}
-\label{subsec:walidacja-wniosek}
-
-Hybrydowe podejście do procesu walidacji -- integrujące analizę zachowania systemowego z elementarnym testem odtworzeniowym -- stanowi jednoznaczne świadectwo pełnej spójności numerycznej. Przeprowadzone badania wykazały przeszło dwudziestokrotne dotrzymanie reżimu dokładności określonego przez kryterium~\textbf{N1}. Potwierdza to pełną przydatność opracowanego pakietu oprogramowania do integracji z heurystycznym algorytmem optymalizacji PSO (gdzie wyznaczone przebiegi posłużą do budowy funkcji celu), bez ryzyka naruszenia poprawności matematycznej względem wiodących komercyjnych środowisk inżynierskich.
-
-\section{Repozytorium kodu i~kontrola wersji}
+\section{Zapewnienie jakości, testy regresyjne i~kontrola wersji}
 \label{sec:repo}
 
-Spełnienie wymogu~\textbf{N5} w zakresie reprodukowalności obliczeń wymagało wdrożenia restrykcyjnej procedury śledzenia ewolucji kodu źródłowego na każdym etapie tworzenia bliźniaka cyfrowego. W tym celu zastosowano rozproszony system kontroli wersji \emph{Git}, stanowiący powszechny standard w inżynierii oprogramowania~\cite{chacon2014progit}. Pełna historia zmian wraz ze wszystkimi skryptami pomocniczymi, bazą danych referencyjnych z PSIM oraz raportami walidacyjnymi została zdeponowana w publicznym repozytorium pod adresem \url{https://github.com/rafal-kaczynski-raf-tech/praca-magisterska}.
+Spełnienie wymogów inżynierii oprogramowania w~zakresie reprodukowalności (\textbf{N5}) oraz testowalności (\textbf{N6}) wymagało wdrożenia rygorystycznej procedury kontroli wersji oraz zautomatyzowanego mechanizmu weryfikacji regresyjnej. W~tym celu zastosowano rozproszony system kontroli wersji \emph{Git}~\cite{chacon2014progit}, a~całość kodu źródłowego, konfiguracji oraz skryptów testowych zdeponowano w~publicznym repozytorium pod adresem \url{https://github.com/rafal-kaczynski-raf-tech/praca-magisterska}.
 
-\subsection{Struktura repozytorium}
+\subsection{Struktura repozytorium i~zarządzanie zależnościami}
 \label{subsec:struktura-repo}
 
-Architekturę repozytorium zaprojektowano zgodnie z zasadą separacji odpowiedzialności, oddzielając reużywalną bibliotekę (katalog \texttt{src/}) od skryptów wykonawczych oraz testów regresji (katalog \texttt{tests/}). Folder \texttt{src/} zawiera sześć modułów funkcjonalnych, które bezpośrednio odzwierciedlają strukturę logiczną opisaną w sekcji~\nameref{sec:architektura}: \texttt{config.py} (definicje parametrów wejściowych), \texttt{converter.py} (silnik fizyczny obwodu), \texttt{controller.py} (implementacja regulatora MF-BB), \texttt{sampler.py} (warstwa dyskretyzacji ZOH), \texttt{filters.py} (cyfrowy filtr Butterwortha~--~autorska implementacja biquadu metodą transformacji biliniowej), \texttt{simulator.py} (orkiestrator pętli głównej), uzupełnione plikiem \texttt{\_\_init\_\_.py} stanowiącym publiczny interfejs pakietu. Wszystkie zewnętrzne zależności (\texttt{numpy}, \texttt{pandas}, \texttt{matplotlib}) zostały wyspecyfikowane w pliku \texttt{requirements.txt} z jawnym zamrożeniem wersji, co gwarantuje deterministyczne i powtarzalne odtworzenie środowiska uruchomieniowego na dowolnej platformie sprzętowej.
+Architekturę repozytorium zaprojektowano zgodnie z~zasadą separacji odpowiedzialności, wydzielając następujące główne przestrzenie:
+\begin{itemize}
+    \item \directory{src/} -- rdzeń symulatora (moduły: \texttt{converter.py}, \texttt{controller.py}, \texttt{simulator.py}, \texttt{sampler.py}, \texttt{filters.py}, \texttt{config.py});
+    \item \directory{optymalizacja/} -- moduły strojenia metaheurystycznego (integracja biblioteki \texttt{PySwarms}, funkcje celu, optymalizacja dwutorowa oraz badanie wrażliwości);
+    \item \directory{tests/} -- zautomatyzowane skrypty testowe i~zamrożone dane referencyjne (\texttt{test\_regression.py}, \texttt{baseline\_results.npz});
+    \item \texttt{requirements.txt} -- specyfikacja zależności z~jawnym zablokowaniem wersji (\texttt{numpy}, \texttt{pyswarms}, \texttt{scipy}, \texttt{matplotlib}, \texttt{reportlab}).
+\end{itemize}
 
 \subsection{Model rozgałęzień i~konwencja commitów}
 \label{subsec:gitflow}
 
-W procesie wytwórczym wykorzystano uproszczony wariant modelu \emph{Git Flow}, zaadaptowany do specyfiki pracy indywidualnej. Struktura opiera się na czterech równoległych gałęziach o zdefiniowanym przeznaczeniu semantycznym: \texttt{main} (wersja stabilna, produkcyjna), \texttt{staging} (gałąź integracyjna służąca do scalania ukończonych etapów projektowych), \texttt{development} (bieżący rozwój funkcjonalności) oraz dedykowane gałęzie zadaniowe (np. \texttt{task/convert\_to\_oop}, zawierająca refaktoryzację struktury obiektowej opisaną w sekcji~\nameref{subsec:oop}). Taka organizacja pracy pozwoliła na bezpieczne testowanie eksperymentalnych modyfikacji kodu bez ryzyka destabilizacji wersji zweryfikowanej numerycznie.
+W~procesie wytwórczym wykorzystano adaptację modelu \emph{Git Flow} do specyfiki projektu badawczego:
+\begin{itemize}
+    \item \texttt{main} -- wersja stabilna, poddana pełnej walidacji i~opisana w~niniejszej pracy;
+    \item \texttt{staging} -- gałąź integracyjna służąca do agregacji zakończonych etapów optymalizacyjnych;
+    \item \texttt{development} -- gałąź bieżącego rozwoju funkcjonalności;
+    \item dedykowane gałęzie zadaniowe (\emph{feature branches}) -- np.~\texttt{task/convert\_to\_oop}, na~której przeprowadzono refaktoryzację architektury proceduralnej do obiektowej.
+\end{itemize}
 
-Konwencję opisów zatwierdzeń (commitów) podporządkowano zasadzie tworzenia przejrzystej i samodokumentującej się historii zmian. Każdy wpis otwierany jest jednoznacznym identyfikatorem kontekstowym (np. \emph{Krok 2.6: MF-BB z~estymacją prądu obciążenia -- walidacja 1:1 z~PSIM}, \emph{Refactor: warstwa OOP (Converter/Controller/Simulator) -- identyczna bit-w-bit} czy \emph{Test regresji + baseline snapshot Kroku 2.6}). Tak prowadzony dziennik zmian pozwala na precyzyjne odtworzenie dowolnej historycznej fazy projektu wraz z jej merytorycznym uzasadnieniem, a także stanowi formalny zapis chronologii podejmowanych decyzji inżynierskich.
+Konwencja opisów zatwierdzeń (commitów) podporządkowana została zasadzie jednoznaczności semantycznej, co umożliwia precyzyjne śledzenie procesu ewolucji kodu źródłowego.
 
-\subsection{Reprodukowalność wyników}
+\subsection{Determinizm i~automatyczne testy regresyjne}
 \label{subsec:reprodukowalnosc}
 
-Praktyczną realizacją założenia~\textbf{N5} jest zapewnienie możliwości pełnego zreplikowania każdego eksperymentu obliczeniowego zaprezentowanego w niniejszej pracy na dowolnej stacji roboczej wyposażonej w interpreter języka Python (w wersji $\ge 3.10$). Procedura ta sprowadza się do wykonania standardowej sekwencji operacji: sklonowania repozytorium, utworzenia środowiska wirtualnego \texttt{venv}, instalacji pakietów zdefiniowanych w pliku \texttt{requirements.txt} oraz uruchomienia właściwego skryptu analitycznego (np. \texttt{porownanie\_oop\_vs\_psim.py} w celu wygenerowania danych do tabeli~\ref{tab:metryki-walidacji} lub \texttt{replay\_test\_physics\_only.py} dla weryfikacji samego rdzenia fizycznego). Pełen determinizm numeryczny osiągnięto poprzez eliminację losowości -- silnik fizyczny nie korzysta z generatorów liczb pseudolosowych, a wszystkie stany początkowe są sztywno zadeklarowane w pliku \texttt{config.py}. W powiązaniu z unikalnymi sumami kontrolnymi \emph{SHA-1} przypisanymi do każdej rewizji w systemie Git, podejście to pozwala na jednoznaczne powiązanie konkretnego stanu kodu źródłowego z dowolnym wynikiem liczbowym zawartym w rozprawie, co ostatecznie potwierdza pełną realizację postulatu~\textbf{N5}.
+Praktyczną realizacją założenia~\textbf{N6} jest zautomatyzowany test regresyjny zaimplementowany w~skrypcie \texttt{tests/test\_regression.py}. Jego zadaniem jest bezwzględne zagwarantowanie, że wszelkie modyfikacje strukturalne kodu, refaktoryzacje oraz optymalizacje wydajnościowe nie zmieniają wartości wyliczanych zmiennych fizycznych poza ścisłą tolerancję numeryczną:
+\begin{equation}
+    \max_{k, j} \left| x_{\mathrm{new}}[k, j] - x_{\mathrm{baseline}}[k, j] \right| \le \varepsilon_{\mathrm{tol}},
+    \label{eq:regression-tol}
+\end{equation}
+gdzie przyjęto $\varepsilon_{\mathrm{tol}} = 10^{-12}$ (poziom precyzji zmiennoprzecinkowej IEEE 754 w~podwójnej precyzji \texttt{float64}).
+
+Test weryfikuje $12$ kluczowych tablic wynikowych (w~tym przebiegi napięcia $u_{\mathrm{dc}}$, prądu $i_L$, zmiennej sterującej $s$, estymowanego prądu obciążenia oraz sygnałów filtrów) względem zamrożonego snapshotu \texttt{tests/baseline\_results.npz}. Wykonanie testu po transformacji silnika z~wersji proceduralnej do obiektowej OOP potwierdziło uzyskanie $\max|\Delta| = 0{,}000\cdot 10^0$ na wszystkich kanałach, co stanowi numeryczny dowód zachowania pełnej równoważności obliczeniowej.
+
+\subsection{Podsumowanie warstwy informatycznej}
+\label{subsec:realizacja-podsumowanie}
+
+Opracowana architektura oprogramowania Bliźniaka Cyfrowego w~języku Python w~pełni zrealizowała sformułowane w~sekcji~\ref{sec:wymagania} wymagania funkcjonalne i~niefunkcjonalne. Zastosowanie obiektowej enkapsulacji, wektoryzacji operacji w~bibliotece NumPy oraz jawnego ekstrapolatora ZOH pozwoliło na stworzenie narzędzia szybkiego, deterministycznego i~podatnego na testowanie.
+
+O~ile testy regresyjne gwarantują wewnętrzną spójność oprogramowania, o~tyle kluczowym zagadnieniem z~punktu widzenia nauk technicznych jest wierność odwzorowania rzeczywistego układu fizycznego. Szczegółowa walidacja symulacyjna Bliźniaka Cyfrowego względem komercyjnego środowiska PSIM, testy odtworzeniowe oraz badania zachowania przekształtnika w~warunkach skrajnych stanowią przedmiot kolejnego, dedykowanego rozdziału~\ref{ch:badania}.

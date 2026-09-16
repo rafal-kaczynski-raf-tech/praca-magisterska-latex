@@ -22,7 +22,29 @@ Wszystkie symulacje weryfikacyjne zrealizowano przy dyskretyzacji czasowej odpow
 
 Pierwszym etapem procedury weryfikacyjnej było sprawdzenie poprawności numerycznej samego równania różniczkowego przekształtnika podwyższającego (bez udziału pętli sprzężenia zwrotnego). W~układzie wymuszono stały współczynnik wypełnienia impulsów $D = 0{,}50$ przy częstotliwości kluczowania $f_{\mathrm{sw}} = 100~\mathrm{kHz}$ i~nominalnym obciążeniu $R_{\mathrm{load}} = 47{,}619~\Omega$. 
 
-Porównanie przebiegów wygenerowanych przez skrypt \texttt{demo.py} z~danymi referencyjnymi z~pliku \texttt{psim\_wyniki.csv} wykazało pełną zgodność jakościową i~ilościową. Przebieg napięcia kondensatora oraz prądu dławika w~fazie rozruchu i~w~stanie ustalonym idealnie pokrywa się z~trajektorią PSIM, a~średni błąd napięcia w~stanie ustalonym nie przekracza $0{,}05\,\%$. Potwierdza to poprawność zaimplementowanej w~klasie \texttt{Converter} metody całkowania Eulera ze stałym krokiem czasowym.
+Porównanie przebiegów wygenerowanych przez skrypt symulatora z~danymi referencyjnymi wyeksportowanymi z~programu PSIM wykazało pełną zgodność jakościową i~ilościową. Przebieg napięcia kondensatora oraz prądu dławika w~fazie rozruchu i~w~stanie ustalonym idealnie pokrywa się z~trajektorią PSIM, a~średni błąd napięcia w~stanie ustalonym nie przekracza $0{,}05\,\%$. Potwierdza to poprawność sformułowanych w~rozdziale~\ref{subsec:rownania-stanu} równań różniczkowych oraz stabilność metody całkowania Eulera ze stałym krokiem czasowym.
+
+\subsection{Procedura testu odtworzeniowego (Replay Test)}
+\label{subsec:replay-test}
+
+Ocena globalna przy zamkniętej pętli sprzężenia zwrotnego -- choć odzwierciedla docelowy scenariusz aplikacyjny -- uniemożliwia precyzyjne wyizolowanie źródła potencjalnych rozbieżności obliczeniowych. W~takim układzie trudne staje się jednoznaczne określenie, jaka część błędu wynika bezpośrednio z~działania całkującego jądra numerycznego, a~jaka jest generowana przez niuanse implementacyjne samego algorytmu sterowania. Rozwiązaniem tego problemu metodologicznego stało się wdrożenie procedury weryfikacyjnej znanej jako \emph{test odtworzeniowy} (\emph{replay test}).
+
+Głównym założeniem tej metody było programowe odłączenie modułu regulatora i~zastąpienie go funkcją wymuszającą, która zasilała model fizyczny historycznym wektorem sygnału sterującego $s(t)$, wyekstrahowanym uprzednio z~dziennika symulacji PSIM. Ponieważ natywny plik CSV z~oprogramowania referencyjnego posiadał rozdzielczość ograniczoną do makrokroku $10~\mu\mathrm{s}$, stany kluczujące dla wyższej rozdzielczości $\Delta t=0{,}5~\mu\mathrm{s}$ odtworzono na podstawie znaku pierwszej pochodnej przebiegu prądu dławika ($\mathrm{sgn}(\mathrm{d}i_L/\mathrm{d}t)$). Dodatnia wartość pochodnej oznaczała załączenie tranzystora dolnego ($s=1$), natomiast ujemna -- jego rozwarcie ($s=0$). Tak przygotowany wektor logiczny posłużył jako bezpośrednie wymuszenie dla zaimplementowanej w~Pythonie klasy \texttt{Converter}. Uzyskane tą drogą tory fazowe $i_L^{py}(t)$ oraz $u_{\mathrm{dc}}^{py}(t)$ porównano bezpośrednio z~trajektoriami referencyjnymi $i_L^{\mathrm{psim}}(t)$ i~$u_{\mathrm{dc}}^{\mathrm{psim}}(t)$.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{rysunki/dowod_zgodnosci_fizyki_psim.png}
+    \caption{Wynik testu odtworzeniowego: porównanie przebiegów $i_L$ oraz $u_{\mathrm{dc}}$ autorskiego silnika fizycznego (Python) z~referencyjnym przebiegiem PSIM przy identycznym sygnale przełączeń, dla wybranych segmentów czasowych.}
+    \label{fig:replay-test}
+\end{figure}
+
+Zastosowane podejście pozwoliło na niezależną walidację poprawności matematycznej równań stanu obwodu~\eqref{eq:state-unified} oraz działania dyskretyzacji czasowej jawnej metody Eulera~\eqref{eq:euler-forward}, całkowicie uniezależniając proces od dynamiki pętli regulacji. Na podstawie analizy statystycznej próbki obejmującej $14$ rozłącznych interwałów czasowych -- reprezentujących zarówno stany statyczne, jak i~stany przejściowe o~wysokiej dynamice łącznikowej -- wyznaczono mediany maksymalnych błędów bezwzględnych:
+\begin{equation*}
+    \mathrm{med}\bigl(\max|i_L^{py}-i_L^{\mathrm{psim}}|\bigr) \approx 3~\mathrm{mA},\qquad
+    \mathrm{med}\bigl(\max|u_{\mathrm{dc}}^{py}-u_{\mathrm{dc}}^{\mathrm{psim}}|\bigr) \approx 0{,}31~\mathrm{V}.
+\end{equation*}
+
+Odnosząc te wartości do znamionowych poziomów prądów i~napięć (odpowiednio $12~\mathrm{A}$ oraz $240~\mathrm{V}$), stwierdzone odchyłki przekładają się na błąd względny rzędu zaledwie $0{,}03\,\%$ dla prądu oraz $0{,}13\,\%$ dla napięcia. Graficzną ilustrację zgodności trajektorii dla wybranych segmentów czasowych przedstawiono na rysunku~\ref{fig:replay-test}. Wynik ten jednoznacznie dowodzi, że opracowane jądro obliczeniowe stanowi wierną implementację praw fizyki obwodu, a~zaobserwowane błędy są pomijalnie małe.
 
 \subsection{Zamknięta pętla ze sterownikiem Bang-Bang}
 \label{subsec:val-closedloop}
@@ -51,6 +73,20 @@ Zestawienie wskaźników statystycznych wyznaczonych w~stanie ustalonym ($t \in 
 \end{table}
 
 Odchyłka średniego napięcia wyjściowego wynosi zaledwie $-0{,}113~\mathrm{V}$ (błąd względny $0{,}05\,\%$, czyli pół promila), a~średni prąd dławika różni się o~$0{,}046~\mathrm{A}$ ($0{,}38\,\%$). Globalny współczynnik wypełnienia impulsów $D$ jest identyczny z~dokładnością do czterech miejsc po przecinku. Potwierdza to pełną równoważność behawioralną opracowanego oprogramowania względem platformy komercyjnej.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{rysunki/porownanie_bb_estim_full_psim.png}
+    \caption{Porównanie pełnych przebiegów napięcia wyjściowego $u_{\mathrm{dc}}$ oraz prądu dławika $i_L$ pomiędzy autorskim symulatorem Python (linia niebieska) a~modelem referencyjnym PSIM (linia czerwona) w~horyzoncie $T_{\mathrm{end}}=100~\mathrm{ms}$.}
+    \label{fig:walidacja-full}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{rysunki/porownanie_bb_estim_zoom.png}
+    \caption{Zbliżenie przebiegów $u_{\mathrm{dc}}$ oraz $i_L$ w~ustalonym punkcie pracy ($t \in [80;\, 85]~\mathrm{ms}$) umożliwiające obserwację indywidualnych okresów przełączeń sterownika.}
+    \label{fig:walidacja-zoom}
+\end{figure}
 
 \section{Stress-testy układu i~granice stabilności}
 \label{sec:stress}
