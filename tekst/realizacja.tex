@@ -70,16 +70,16 @@ Nominalne wartości elementów pozyskano bezpośrednio z~okien właściwości ko
     \caption{Parametry elektryczne referencyjnego obwodu odczytane ze schematu PSIM.}
     \label{tab:parametry-obwodu}
     \begin{tabular}{lll}
-        \hline
+        \toprule
         \textbf{Symbol} & \textbf{Wartość} & \textbf{Opis} \\
-        \hline
+        \midrule
         $V_{in}$  & $100~\mathrm{V}$       & napięcie zasilania (strona niskonapięciowa) \\
         $L$       & $0{,}75~\mathrm{mH}$   & indukcyjność dławika \\
         $R_L$     & $0{,}05~\Omega$        & pasożytnicza rezystancja uzwojenia dławika \\
         $C$       & $200~\mu\mathrm{F}$    & pojemność kondensatora wyjściowego \\
         $R_{obc}$ & $47{,}619~\Omega$      & rezystancja zastępcza obciążenia ($R_{32}\parallel R_{33}$) \\
         $u_{ref}$ & $240~\mathrm{V}$       & napięcie zadane na wyjściu \\
-        \hline
+        \bottomrule
     \end{tabular}
 \end{table}
 
@@ -147,16 +147,16 @@ Kod źródłowy aplikacji został zorganizowany wewnątrz pakietu \texttt{src/},
     \caption{Architektura pakietu \texttt{src/} obiektowej wersji symulatora MF-BB.}
     \label{tab:moduly}
     \begin{tabular}{lll}
-        \hline
+        \toprule
         \textbf{Moduł} & \textbf{Klasa / obiekt} & \textbf{Obszar odpowiedzialności} \\
-        \hline
+        \midrule
         \texttt{config.py}     & \texttt{SimulationConfig}  & struktura niezmiennych parametrów eksperymentu \\
         \texttt{converter.py}  & \texttt{Converter}         & integracja numeryczna (metoda Eulera) obwodu \\
-        \texttt{filters.py}    & \texttt{ButterworthLPF}    & cyfrowa filtracja dolnoprzepustowa~2.~rzędu \\
+        \texttt{filters.py}    & \texttt{ButterworthLPF}, filtry Tustina & cyfrowa filtracja sygnałów pomiarowych \\
         \texttt{sampler.py}    & \texttt{ZOHSampler}        & modelowanie dyskretyzacji i~opóźnienia ZOH \\
-        \texttt{controller.py} & \texttt{MFBBController}    & implementacja algorytmu sterowania MF-BB \\
+        \texttt{controller.py} & \texttt{MFBBController}, \texttt{TrendMFBB} & algorytmy sterowania Bang-Bang \\
         \texttt{simulator.py}  & \texttt{Simulator}         & zarządzanie pętlą czasową i~rejestracja danych \\
-        \hline
+        \bottomrule
     \end{tabular}
 \end{table}
 
