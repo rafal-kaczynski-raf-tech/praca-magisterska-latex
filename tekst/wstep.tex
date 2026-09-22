@@ -59,7 +59,7 @@ Praca powstaje w~ramach kierunku Informatyka Stosowana, co determinuje szczegól
 \begin{itemize}
 	\item \emph{warstwa fizyki obwodowej} -- klasy reprezentujące parametry, stany i~równania ruchu przekształtnika, niezależne od logiki sterowania;
 	\item \emph{warstwa sterowania} -- klasy implementujące algorytmy regulacji (MF-BB), operujące wyłącznie na zdefiniowanych interfejsach pomiarowych;
-	\item \emph{warstwa optymalizacji} -- moduły realizujące algorytm PSO we współpracy z biblioteką \texttt{PySwarms}, traktujące pętlę symulacyjną jako deterministyczną funkcję celu;
+	\item \emph{warstwa optymalizacji} -- moduły realizujące algorytm PSO we współpracy z biblioteką \texttt{PySwarms}, wykorzystujące przebiegi z~pętli symulacyjnej do ewaluacji deterministycznych funkcji celu (takich jak CurrentAware czy ITAE);
 	\item \emph{warstwa eksperymentu i~wizualizacji} -- moduły uruchomieniowe oraz prezentacyjne, oddzielone od logiki rdzenia.
 \end{itemize}
 
