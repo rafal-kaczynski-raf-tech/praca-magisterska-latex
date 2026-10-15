@@ -43,12 +43,12 @@ Wprowadzone kryteria posiadają wymierny charakter i stanowią podstawę do wery
 \section{Inżynieria odwrotna obwodu z~programu PSIM}
 \label{sec:reverse-eng}
 
-Punktem wyjścia dla procesu modelowania matematycznego stał się referencyjny schemat obwodu, opracowany w środowisku PSIM i udostępniony przez promotora pracy. Struktura ta w sposób kompletny odwzorowuje część algorytmową oraz obwód główny przekształtnika energetycznego wraz z cyfrowym blokiem sterowania (C-block), realizującym algorytm MF-BB. Przeprowadzenie inżynierii odwrotnej wymagało realizacji trzech kluczowych etapów: identyfikacji struktury topologicznej układu wraz z określeniem ról poszczególnych komponentów, ekstrakcji wartości parametrów elektrycznych bezpośrednio z modelu referencyjnego oraz sformułowania układu równań różniczkowych opisujących stany dynamiczne konwertera dla każdego położenia kluczy energoelektronicznych.
+Punktem wyjścia dla procesu modelowania matematycznego stał się referencyjny schemat obwodu, opracowany w środowisku PSIM i udostępniony przez promotora pracy. Struktura ta w sposób kompletny odwzorowuje część algorytmową oraz obwód główny przekształtnika energetycznego wraz z cyfrowym blokiem sterowania (C-block), realizującym algorytm MF-BB. Przeprowadzenie inżynierii odwrotnej wymagało realizacji trzech kluczowych etapów: identyfikacji struktury topologicznej układu wraz z określeniem ról poszczególnych komponentów, ekstrakcji wartości parametrów elektrycznych bezpośrednio z modelu referencyjnego oraz sformułowania układu równań różniczkowych opisujących stany dynamiczne konwertera dla każdego położenia łączników półprzewodnikowych.
 
 \subsection{Topologia układu mocy}
 \label{subsec:topologia}
 
-Na podstawie analizy struktury obwodu (rys.~\ref{fig:bb-schemat}) zidentyfikowano układ jako \emph{synchroniczny przekształtnik podwyższający napięcie} (ang. \emph{synchronous boost converter}). Konstrukcja ta stanowi specyficzną odmianę klasycznej topologii podwyższająco-obniżającej (Buck-Boost), w której tradycyjną parę złożoną z diody i klucza zastąpiono dwoma sterowanymi kluczami półprzewodnikowymi, co pozwala na dwukierunkowy przepływ energii~\cite{erickson2020}. Tego typu rozwiązanie układowe umożliwia zwrot energii zgromadzonej w polu magnetycznym dławika w obu kierunkach, dzięki czemu doskonale wpisuje się w specyfikację systemów mikrosieci prądu stałego współpracujących z magazynami energii.
+Na podstawie analizy struktury obwodu (rys.~\ref{fig:bb-schemat}) zidentyfikowano układ jako \emph{dwukierunkowy przekształtnik podwyższający napięcie} (ang. \emph{bidirectional DC-DC converter}). Konstrukcja ta stanowi specyficzną odmianę klasycznej topologii podwyższająco-obniżającej (Buck-Boost), w której tradycyjną parę złożoną z diody i łącznika zastąpiono dwoma sterowanymi łącznikami półprzewodnikowymi, co pozwala na dwukierunkowy przepływ energii~\cite{erickson2020}. Tego typu rozwiązanie układowe umożliwia zwrot energii zgromadzonej w polu magnetycznym dławika w obu kierunkach, dzięki czemu doskonale wpisuje się w specyfikację systemów mikrosieci prądu stałego współpracujących z magazynami energii.
 
 % Rysunek schematu PSIM zaczerpnięty z~repozytorium kodu (~/repos/py/demo/screeny/bb-schemat.png).
 \begin{figure}[ht]
@@ -58,7 +58,7 @@ Na podstawie analizy struktury obwodu (rys.~\ref{fig:bb-schemat}) zidentyfikowan
    \label{fig:bb-schemat}
 \end{figure}
 
-W strukturze sprzętowej wyróżnić można cztery zasadnicze bloki: źródło napięcia stałego $V_{in}$ modelujące ogniwo zasilające sekcji niskonapięciowej, dławik $L$ stanowiący indukcyjny magazyn energii, obarczony pasożytniczą rezystancją szeregową uzwojenia $R_L$, parę kluczy półprzewodnikowych kluczowanych w sposób komplementarny (których stan logiczny opisuje binarna zmienna sterująca $s\in\{0,1\}$), a także kondensator wyjściowy $C$ połączony równolegle z obciążeniem rezystancyjnym $R_{obc}$, na którym ustala się napięcie wyjściowe $u_{dc}$.
+W strukturze sprzętowej wyróżnić można cztery zasadnicze bloki: źródło napięcia stałego $V_{in}$ modelujące ogniwo zasilające sekcji niskonapięciowej, dławik $L$ stanowiący indukcyjny magazyn energii, obarczony pasożytniczą rezystancją szeregową uzwojenia $R_L$, parę łączników półprzewodnikowych sterowanych w sposób komplementarny (których stan logiczny opisuje binarna zmienna sterująca $s\in\{0,1\}$), a także kondensator wyjściowy $C$ połączony równolegle z obciążeniem rezystancyjnym $R_{\mathrm{load}}$, na którym ustala się napięcie wyjściowe $u_{dc}$.
 
 \subsection{Identyfikacja parametrów elektrycznych}
 \label{subsec:parametry}
@@ -77,13 +77,13 @@ Nominalne wartości elementów pozyskano bezpośrednio z~okien właściwości ko
         $L$       & $0{,}75~\mathrm{mH}$   & indukcyjność dławika \\
         $R_L$     & $0{,}05~\Omega$        & pasożytnicza rezystancja uzwojenia dławika \\
         $C$       & $200~\mu\mathrm{F}$    & pojemność kondensatora wyjściowego \\
-        $R_{obc}$ & $47{,}619~\Omega$      & rezystancja zastępcza obciążenia ($R_{32}\parallel R_{33}$) \\
+        $R_{\mathrm{load}}$ & $47{,}619~\Omega$      & rezystancja zastępcza obciążenia ($R_{32}\parallel R_{33}$) \\
         $u_{ref}$ & $240~\mathrm{V}$       & napięcie zadane na wyjściu \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-Przyjęta wartość rezystancji obciążenia wymaga dodatkowego wyjaśnienia: w~strukturze referencyjnej PSIM zastosowano układ dwóch połączonych równolegle rezystorów $R_{32}=1~\mathrm{k}\Omega$ oraz $R_{33}=50~\Omega$, co w~rezultacie daje rezystancję zastępczą o~wartości $R_{obc}=R_{32}\parallel R_{33}=47{,}619~\Omega$. Prawidłowość ta została niezależnie potwierdzona drogą empiryczną na~podstawie ilorazu wartości średnich napięcia i~prądu wyjściowego w~stanie ustalonym, wyznaczonych na~bazie wyeksportowanego zbioru danych CSV.
+Przyjęta wartość rezystancji obciążenia wymaga dodatkowego wyjaśnienia: w~strukturze referencyjnej PSIM zastosowano układ dwóch połączonych równolegle rezystorów $R_{32}=1~\mathrm{k}\Omega$ oraz $R_{33}=50~\Omega$, co w~rezultacie daje rezystancję zastępczą o~wartości $R_{\mathrm{load}}=R_{32}\parallel R_{33}=47{,}619~\Omega$. Prawidłowość ta została niezależnie potwierdzona drogą empiryczną na~podstawie ilorazu wartości średnich napięcia i~prądu wyjściowego w~stanie ustalonym, wyznaczonych na~bazie wyeksportowanego zbioru danych CSV.
 
 \subsection{Wyprowadzenie równań dynamiki przekształtnika}
 \label{subsec:rownania-stanu}
@@ -92,15 +92,15 @@ W~dalszych rozważaniach teoretycznych i~numerycznych wprowadzono następujące 
 
 Matematyczny model dynamiki przekształtnika determinowany jest przez układ dwóch sprzężonych równań różniczkowych pierwszego rzędu, których postać jest ściśle powiązana z~aktualną wartością sygnału $s$. Wykorzystując prawa sformułowane przez Kirchhoffa dla obu struktur topologicznych, wyprowadzono następujące zależności matematyczne~\cite{erickson2020}.
 
-Dla konfiguracji opisanej stanem \textbf{$s=1$} (załączenie dolnego klucza i~zwarcie dławika do~potencjału odniesienia) następuje odcięcie obwodu wejściowego od~kondensatora wyjściowego. Energia pobierana ze~źródła zasilania $V_{in}$ jest wówczas akumulowana w~polu magnetycznym indukcyjności, podczas gdy kondensator wyjściowy ulega rozładowaniu wyłącznie przez rezystancję obciążenia, co zapisać można jako:
+Dla konfiguracji opisanej stanem \textbf{$s=1$} (załączenie dolnego łącznika i~zwarcie dławika do~potencjału odniesienia) następuje odcięcie obwodu wejściowego od~kondensatora wyjściowego. Energia pobierana ze~źródła zasilania $V_{in}$ jest wówczas akumulowana w~polu magnetycznym indukcyjności, podczas gdy kondensator wyjściowy ulega rozładowaniu wyłącznie przez rezystancję obciążenia, co zapisać można jako:
 \begin{equation}
-    L\,\frac{di_L}{dt} = V_{in} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = -\frac{u_{dc}}{R_{obc}}.
+    L\,\frac{di_L}{dt} = V_{in} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = -\frac{u_{dc}}{R_{\mathrm{load}}}.
     \label{eq:state-s1}
 \end{equation}
 
-Dla konfiguracji opisanej stanem \textbf{$s=0$} (górny klucz w~stanie przewodzenia, dolny odcięty) dławik zostaje włączony w~obwód wyjściowy, przekazując zgromadzoną energię do~kondensatora oraz obciążenia:
+Dla konfiguracji opisanej stanem \textbf{$s=0$} (górny łącznik w~stanie przewodzenia, dolny odcięty) dławik zostaje włączony w~obwód wyjściowy, przekazując zgromadzoną energię do~kondensatora oraz obciążenia:
 \begin{equation}
-    L\,\frac{di_L}{dt} = V_{in} - u_{dc} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = i_L - \frac{u_{dc}}{R_{obc}}.
+    L\,\frac{di_L}{dt} = V_{in} - u_{dc} - R_L\,i_L, \qquad C\,\frac{du_{dc}}{dt} = i_L - \frac{u_{dc}}{R_{\mathrm{load}}}.
     \label{eq:state-s0}
 \end{equation}
 
@@ -108,7 +108,7 @@ W~celu ułatwienia późniejszej implementacji programistycznej, oba stany pracy
 \begin{equation}
     \begin{aligned}
         u_L &= V_{in} - (1-s)\,u_{dc} - R_L\,i_L, \\
-        i_C &= (1-s)\,i_L - \frac{u_{dc}}{R_{obc}}, \\
+        i_C &= (1-s)\,i_L - \frac{u_{dc}}{R_{\mathrm{load}}}, \\
         \frac{di_L}{dt} &= \frac{u_L}{L}, \qquad \frac{du_{dc}}{dt} = \frac{i_C}{C}.
     \end{aligned}
     \label{eq:state-unified}
@@ -119,14 +119,14 @@ Powyższe relacje stanowią kompletny rdzeń matematyczny silnika fizycznego, kt
 \section{Architektura oprogramowania}
 \label{sec:architektura}
 
-Skuteczna realizacja założeń projektowych w~zakresie modułowości~(\textbf{N4}) oraz podatności kodu na~testowanie~(\textbf{N6}), opisanych szczegółowo w~sekcji~\nameref{sec:wymagania}, wymagała jednoznacznego określenia paradygmatu programistycznego oraz strategii dekompozycji systemu. W~niniejszym rozdziale przedstawiono uzasadnienie wyboru podejścia obiektowego oraz omówiono podział struktury kodu na~pakiety i~moduły, zrealizowany w~zgodzie z~zasadą pojedynczej odpowiedzialności (\emph{single responsibility principle}).
+Skuteczna realizacja założeń projektowych w~zakresie modułowości~(\textbf{N4}) oraz podatności kodu na~testowanie~(\textbf{N6}), opisanych szczegółowo w~sekcji~\nameref{sec:wymagania}, wymagała jednoznacznego określenia struktury programistycznej oraz strategii dekompozycji systemu. W~niniejszym rozdziale przedstawiono uzasadnienie wyboru podejścia obiektowego oraz omówiono podział struktury kodu na~pakiety i~moduły, zrealizowany w~zgodzie z~zasadą pojedynczej odpowiedzialności (\emph{single responsibility principle}).
 
-\subsection{Paradygmat programowania obiektowego}
+\subsection{Programowanie obiektowe}
 \label{subsec:oop}
 
 Wstępna, prototypowa implementacja symulatora została wykonana w~konwencji proceduralnej. Całość logiki -- obejmująca definicje parametrów, zmienne stanu obwodu, algorytm sterowania oraz procedury zapisu danych -- została wówczas skupiona wewnątrz jednej funkcji \texttt{simulate()}. Choć rozwiązanie to pozwoliło na~szybką walidację modelu w~relacji 1:1 z~oprogramowaniem PSIM (opisanej szczegółowo w~rozdziale~\ref{ch:badania}), generowało ono poważne bariery w~kontekście dalszego rozwoju aplikacji. Silne powiązanie poszczególnych warstw uniemożliwiało izolowane testowanie komponentów, a~wykorzystanie globalnych zmiennych stanu wykluczało bezpieczne, wielokrotne uruchamianie kodu w~pętli optymalizacyjnej algorytmu PSO.
 
-Z~tego względu, po~zakończeniu fazy weryfikacji fizycznej, strukturę kodu zrefaktoryzowano do~postaci obiektowej. Zastosowanie paradygmatu OOP pozwoliło na~osiągnięcie następujących korzyści:
+Z~tego względu, po~zakończeniu fazy weryfikacji fizycznej, strukturę kodu zrefaktoryzowano do~postaci obiektowej. Zastosowanie programowania obiektowego pozwoliło na~osiągnięcie następujących korzyści:
 
 \begin{itemize}
     \item \textbf{izolacja stanu wewnętrznego} -- poszczególne klasy (takie jak \texttt{Converter} czy \texttt{MFBBController}) samodzielnie zarządzają własnymi polami stanu, co~wyeliminowało konieczność stosowania zmiennych globalnych i~jawnego przekazywania ich w~argumentach funkcji;
@@ -160,9 +160,9 @@ Kod źródłowy aplikacji został zorganizowany wewnątrz pakietu \texttt{src/},
     \end{tabular}
 \end{table}
 
-Relacje i~kierunki zależności pomiędzy modułami zaprojektowano w~sposób całkowicie acykliczny. Warstwa konfiguracji (\texttt{config.py}) stanowi niezależny fundament, z~którego jawnie korzystają klasy odpowiedzialne za~fizykę oraz algorytm sterowania. Z~kolei nadrzędny orkiestrator -- klasa \texttt{Simulator} -- agreguje wszystkie podrzędne komponenty i~udostępnia jedyny punkt wejścia dla skryptów uruchomieniowych warstwy aplikacyjnej. Taka topologia znacząco upraszcza statyczną analizę kodu i~zapobiega powstawaniu cyklicznych zależności pomiędzy modułami.
+Relacje i~kierunki zależności pomiędzy modułami zaprojektowano w~sposób całkowicie acykliczny. Warstwa konfiguracji (\texttt{config.py}) stanowi niezależny fundament, z~którego jawnie korzystają klasy odpowiedzialne za~fizykę oraz algorytm sterowania. Z~kolei obiekt klasy \texttt{Simulator} pełni funkcję agregatora: łączy komponenty modelu i~sterownika oraz udostępnia skryptom uruchomieniowym jedyny punkt wejścia do symulacji. Taka topologia znacząco upraszcza statyczną analizę kodu i~zapobiega powstawaniu cyklicznych zależności pomiędzy modułami.
 
-Kluczowym założeniem przyjętej dekompozycji jest \emph{całkowite odseparowanie modelu fizycznego od~warstwy decyzyjnej sterownika}. Klasa \texttt{Converter} nie posiada wiedzy o~strukturze algorytmu regulacji -- jej metoda \texttt{step(s,\,dt)} przyjmuje jedynie aktualny stan kluczy półprzewodnikowych oraz krok integracji, realizując wyłącznie obliczenia numeryczne opisane w~sekcji~\nameref{sec:silnik}. Analogicznie klasa \texttt{MFBBController} nie modyfikuje bezpośrednio zmiennych stanu przetwornika. Operuje ona wyłącznie na~sygnałach dostarczanych przez obiekt \texttt{ZOHSampler}, który odzwierciedla działanie układu próbkująco-pamiętającego rzeczywistego mikrokontrolera (wprowadzając opóźnienie o~jedną próbkę). Komunikacja ta opiera się na~celowo zdefiniowanym interfejsie pomiarowym, co~wiernie odwzorowuje strukturę fizycznego układu laboratoryjnego.
+Kluczowym założeniem przyjętej dekompozycji jest \emph{całkowite odseparowanie modelu fizycznego od~warstwy decyzyjnej sterownika}. Klasa \texttt{Converter} nie posiada wiedzy o~strukturze algorytmu regulacji -- jej metoda \texttt{step(s,\,dt)} przyjmuje jedynie aktualny stan łączników półprzewodnikowych oraz krok integracji, realizując wyłącznie obliczenia numeryczne opisane w~sekcji~\nameref{sec:silnik}. Analogicznie klasa \texttt{MFBBController} nie modyfikuje bezpośrednio zmiennych stanu przetwornika. Operuje ona wyłącznie na~sygnałach dostarczanych przez obiekt \texttt{ZOHSampler}, który odzwierciedla działanie układu próbkująco-pamiętającego rzeczywistego mikrokontrolera (wprowadzając opóźnienie o~jedną próbkę). Komunikacja ta opiera się na~celowo zdefiniowanym interfejsie pomiarowym, co~wiernie odwzorowuje strukturę fizycznego układu laboratoryjnego.
 
 Wymiana danych wynikowych pomiędzy klasami \texttt{MFBBController} a~\texttt{Simulator} na~potrzeby logowania realizowana jest poprzez dedykowaną strukturę \texttt{ControllerOutput} (typu \emph{dataclass}). Zastąpienie standardowych krotek lub struktur słownikowych jawnym kontraktem typów wyeliminowało błędy powiązane ze~stosowaniem niejawnych identyfikatorów (\emph{magic constants}) i~podniosło czytelność modułów analizujących wyniki symulacji.
 
@@ -184,12 +184,10 @@ w~której $\Delta t$ definiuje krok całkowania, a~wektor $\mathbf{x}_n=\mathbf{
 Wybór tego -- w~teorii najprostszego -- algorytmu był podyktowany trzema kluczowymi przesłankami inżynierskimi, wynikającymi bezpośrednio z~charakterystyki modelowanego przekształtnika:
 
 \begin{itemize}
-    \item \textbf{nieciągłość funkcji podcałkowej.} Wektorowa funkcja pola~$\mathbf{f}$ silnie zależy od~dwustanowego sygnału sterującego $s(t)\in\{0,1\}$, który ulega skokowym zmianom w~momentach komutacji kluczy. Algorytmy wyższego rzędu (np.~Rungego--Kutty) opierają się na~wielokrotnym próbkowaniu prawej strony równania wewnątrz jednego interwału $\Delta t$. W~przypadku nieciągłości sygnału $\mathbf{f}$, procedury te generują systematyczne błędy interpolacji w~sąsiedztwie punktów przełączeń~\cite{hairer1993};
+    \item \textbf{nieciągłość funkcji podcałkowej.} Wektorowa funkcja pola~$\mathbf{f}$ silnie zależy od~dwustanowego sygnału sterującego $s(t)\in\{0,1\}$, który ulega skokowym zmianom w~momentach komutacji łączników. Algorytmy wyższego rzędu (np.~Rungego--Kutty) opierają się na~wielokrotnym próbkowaniu prawej strony równania wewnątrz jednego interwału $\Delta t$. W~przypadku nieciągłości sygnału $\mathbf{f}$, procedury te generują systematyczne błędy interpolacji w~sąsiedztwie punktów przełączeń~\cite{hairer1993};
     \item \textbf{złożoność obliczeniowa.} Wykonanie pojedynczego kroku w~metodzie Eulera wiąże się z~tylko jedną ewaluacją funkcji $\mathbf{f}$, podczas gdy klasyczna metoda RK4 wymaga aż czterech takich operacji. Biorąc pod~uwagę, że~wyznaczenie pojedynczego przebiegu wymaga wykonania rzędu $2\cdot 10^5$ iteracji (\textit{vide}~\ref{subsec:moduly}), redukcja narzutu obliczeniowego ma kluczowe znaczenie dla szybkości działania algorytmu PSO (\textbf{N3});
-    \item \textbf{zapas stabilności numerycznej.} Warunkiem zachowania stabilności jawnej metody Eulera dla obwodów o~charakterze sztywnym jest utrzymanie relacji $\Delta t\ll\tau_{\min}$, gdzie $\tau_{\min}$ to najkrótsza skala czasowa układu (okres oscylacji bądź stała czasowa). Najszybszą dynamiką w~badanym obwodzie cechuje się obwód rezonansowy $LC$ o~częstotliwości własnej $f_0=1/(2\pi\sqrt{LC})\approx 411~\mathrm{Hz}$ (okres $T_0\approx 2{,}43~\mathrm{ms}$), podczas gdy najkrótsza z~dyssypacyjnych stałych czasowych wynosi $\tau_L=L/R_L=15~\mathrm{ms}$. Zastosowanie kroku $\Delta t=0{,}5~\mu\mathrm{s}$ zapewnia proporcję $T_0/\Delta t\approx 4860$, co~gwarantuje margines stabilności o~trzy rzędy wielkości większy, niż jest to bezwzględnie wymagane.
+    \item \textbf{dobór kroku całkowania.} Sygnał sterujący przekształtnikiem jest aktualizowany co $T_s = 10~\mu\mathrm{s}$ i~pozostaje stały pomiędzy kolejnymi aktualizacjami. Aby obliczać dynamikę obiektu częściej niż zmienia się sygnał sterujący, przyjęto krok całkowania $\Delta t = 0{,}5~\mu\mathrm{s}$. Oznacza to, że w~każdym okresie próbkowania sterownika wykonywanych jest $N_{\mathrm{phys}} = T_s/\Delta t = 20$ kroków jawnej metody Eulera. Po ich wykonaniu sterownik otrzymuje zaktualizowane wartości prądu dławika i~napięcia kondensatora, a~następnie wyznacza kolejny sygnał sterujący. Przyjęty krok spełnia również wymaganie~\textbf{N2}, określające jego maksymalną wartość jako $1~\mu\mathrm{s}$. Zgodność modelu przy tym kroku całkowania zweryfikowano przez porównanie wyników symulacji z~modelem PSIM, przedstawione w~rozdziale~\ref{ch:badania}.
 \end{itemize}
-
-Wartość interwału $\Delta t=0{,}5~\mu\mathrm{s}$ została dobrana zgodnie z~kryterium \textbf{N2} (sekcja~\nameref{sec:wymagania}), definiującym limit na~poziomie $1~\mu\mathrm{s}$. Ustalenie kroku o~połowę krótszego od~dopuszczalnego maksimum pozwala uzyskać zadowalającą wierność odwzorowania stanów przejściowych, a~jednocześnie idealnie synchronizuje się z~okresem próbkowania mikrokontrolera $T_s=10~\mu\mathrm{s}$. Oznacza to, że~na każdy cykl algorytmu sterującego przypada równo $N_{phys}=T_s/\Delta t=20$ kroków numerycznych, co~eliminuje konieczność wprowadzania interpolacji pomiędzy warstwą fizyki a~warstwą decyzyjną. Choć teoretyczny, globalny błąd metody Eulera narasta proporcjonalnie do~wielkości kroku $\mathcal{O}(\Delta t)$~\cite{hairer1993}, jego rzeczywista akumulacja jest redukowana przez naturalne tłumienie rezystancyjne układu, a~jej praktyczne znaczenie ograniczone przez stosunkowo niewielki krok całkowania. Poprawność takiego założenia została empirycznie potwierdzona w~procesie walidacji (rozdział~\ref{ch:badania}).
 
 \subsection{Implementacja równań stanu przetwornicy}
 \label{subsec:rownania}
@@ -210,7 +208,7 @@ Struktura kodu na~powyższym listingu ściśle podąża za~matematycznym opisem 
 
 Należy wyraźnie podkreślić, że~w~obrębie metody \texttt{step()} świadomie uniknięto wektoryzacji operacji. Wybór ten podyktowany jest charakterem sprzężenia modelu obwodowego z~modułem regulatora -- w~systemie dyskretnym sygnał $s$ nie ulega zmianie w~trakcie trwania jednego okresu próbkowania, a~jego nowa wartość generowana jest dopiero po~przetworzeniu najnowszych pomiarów. Pociąga to za~sobą konieczność iteracyjnego rozwiązywania obwodu w~domenie czasu, co~wyklucza zastosowanie wektorowych funkcji biblioteki NumPy bezpośrednio w~rdzeniu integracyjnym. Strategię ominięcia tej przeszkody wydajnościowej poprzez wektoryzację zapisu wyników i~przetwarzania końcowego omówiono w~sekcji~\nameref{sec:wydajnosc}.
 
-Kompletna pętla czasowa symulacji konstruowana jest poprzez wielokrotne wywoływanie metody \texttt{step()} wewnątrz podwójnej iteracji orkiestratora \texttt{Simulator}. Zewnętrzna pętla odmierza cykle mikrokontrolera (krok $T_s=10~\mu\mathrm{s}$), natomiast w~jej wnętrzu realizowanych jest równe $N_{phys}=20$ iteracji fizyki dla ustalonego, zablokowanego sygnału $s$. Taka struktura wiernie odwzorowuje realia pracy sprzętu, gdzie stany sprzętowych rejestrów PWM pozostają niezmienione pomiędzy kolejnymi przerwaniami kontrolera, podtrzymując sygnały bramkowe tranzystorów.
+Kompletna pętla czasowa symulacji konstruowana jest poprzez wielokrotne wywoływanie metody \texttt{step()} wewnątrz podwójnej iteracji obiektu klasy \texttt{Simulator}. Zewnętrzna pętla odmierza cykle mikrokontrolera (krok $T_s=10~\mu\mathrm{s}$), natomiast w~jej wnętrzu realizowanych jest równe $N_{phys}=20$ iteracji fizyki dla ustalonego, zablokowanego sygnału $s$. Taka struktura wiernie odwzorowuje realia pracy sprzętu, gdzie stany sprzętowych rejestrów PWM pozostają niezmienione pomiędzy kolejnymi przerwaniami kontrolera, podtrzymując sygnały bramkowe tranzystorów.
 
 \section{Wydajność}
 \label{sec:wydajnosc}

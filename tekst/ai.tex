@@ -263,7 +263,7 @@ Wizualizację samego procesu przeszukiwania przedstawia rysunek~\ref{fig:pso-roj
 \subsection{Porównanie ilościowe PSO vs.~grid search}
 \label{subsec:pso-vs-grid}
 
-Bezpośrednie zestawienie wartości funkcji celu osiągniętych przez~PSO i~przez~najlepszy węzeł siatki bazowej (225~symulacji) przedstawia rysunek~\ref{fig:pso-vs-grid}. PSO uzyskuje wartości funkcji celu nie~gorsze od~baseline'u siatkowego dla~wszystkich pięciu kryteriów, przy~czym największą poprawę odnotowano dla~kryterium ITAE: wartość $J^*_{\mathrm{PSO}} = 4{,}71\cdot 10^{-3}$ jest~o~ok.~2{,}5\% niższa od~minimum siatkowego $J^*_{\mathrm{grid}} = 4{,}83\cdot 10^{-3}$. Dla~pozostałych kryteriów różnica jest~marginalna (poniżej~0{,}3\%), co~należy interpretować jako~potwierdzenie, że~siatka 15$\times$15 trafiła blisko prawdziwego optimum, a~PSO dokończył eksplorację w~przestrzeni ciągłej.
+Bezpośrednie zestawienie wartości funkcji celu osiągniętych przez~PSO i~przez~najlepszy węzeł siatki bazowej (225~symulacji) przedstawia rysunek~\ref{fig:pso-vs-grid}. PSO uzyskuje wartości funkcji celu nie~gorsze od~siatki bazowej (punktu odniesienia) dla~wszystkich pięciu kryteriów, przy~czym największą poprawę odnotowano dla~kryterium ITAE: wartość $J^*_{\mathrm{PSO}} = 4{,}71\cdot 10^{-3}$ jest~o~ok.~2{,}5\% niższa od~minimum siatkowego $J^*_{\mathrm{grid}} = 4{,}83\cdot 10^{-3}$. Dla~pozostałych kryteriów różnica jest~marginalna (poniżej~0{,}3\%), co~potwierdza, że~siatka 15$\times$15 trafiła blisko prawdziwego optimum, a~PSO dokończył poszukiwania w~przestrzeni ciągłej.
 
 \begin{figure}[h!]
     \centering
@@ -272,9 +272,9 @@ Bezpośrednie zestawienie wartości funkcji celu osiągniętych przez~PSO i~prze
     \label{fig:pso-vs-grid}
 \end{figure}
 
-Z~perspektywy efektywności obliczeniowej PSO osiągnął porównywalne wyniki przy~3,6-krotnie większej liczbie ewaluacji (820 vs.~225). Przewaga metaheurystyki ujawnia się jednak dopiero przy~rozszerzeniu wymiaru przestrzeni przeszukiwań -- dla~regulatora z~$d=4$ hiperparametrami (np.~dodanie współczynników predyktora) siatka tej~samej rozdzielczości wymagałaby $15^4 = 50\,625$ symulacji, podczas gdy PSO zachowuje liniową złożoność $\mathcal{O}(N\cdot K_{\max})$ niezależnie od~$d$.
+Z~perspektywy efektywności obliczeniowej PSO osiągnął porównywalne wyniki przy~3,6-krotnie większej liczbie ewaluacji (820 vs.~225). Przewaga metaheurystyki ujawnia się jednak dopiero przy~rozszerzeniu wymiaru przestrzeni poszukiwań -- dla~regulatora z~$d=4$ parametrami (np.~dodanie parametrów członu trendu) siatka tej~samej rozdzielczości wymagałaby $15^4 = 50\,625$ symulacji, podczas gdy PSO zachowuje liniowe skalowanie złożoności $\mathcal{O}(N\cdot K_{\max})$ względem liczby iteracji, w~przeciwieństwie do~wykładniczego wzrostu siatki wraz z~wymiarem~$d$.
 
-Jakościowe porównanie wpływu wyboru funkcji celu na~odpowiedź czasową regulatora przedstawia rysunek~\ref{fig:pso-przebiegi}. Widoczne są~istotne różnice charakteru regulacji: kryterium kompozytowe prowadzi do~zauważalnego undershoot po~skoku zadania (skutek dominacji $\alpha\cdot t_s$), kryterium asymetryczne praktycznie eliminuje przeregulowanie kosztem dłuższego czasu ustalania, natomiast kryteria MSE/IAE/ITAE generują odpowiedzi zbliżone jakościowo, z~niewielkim przeregulowaniem rzędu kilku~procent.
+Jakościowe porównanie wpływu wyboru funkcji celu na~odpowiedź czasową regulatora przedstawia rysunek~\ref{fig:pso-przebiegi}. Widoczne są~istotne różnice charakteru regulacji: kryterium kompozytowe prowadzi do~zauważalnego zapadu napięcia (ang.~\emph{undershoot}) po~skoku zadania (skutek dominacji $\alpha\cdot t_s$), kryterium asymetryczne praktycznie eliminuje przeregulowanie kosztem dłuższego czasu ustalania, natomiast kryteria MSE/IAE/ITAE generują odpowiedzi zbliżone jakościowo, z~niewielkim przeregulowaniem rzędu kilku~procent.
 
 \begin{figure}[h!]
     \centering
@@ -283,7 +283,7 @@ Jakościowe porównanie wpływu wyboru funkcji celu na~odpowiedź czasową regul
     \label{fig:pso-przebiegi}
 \end{figure}
 
-Powyższe porównanie potwierdza, że~dobór funkcji celu jest~istotniejszy dla~ostatecznego charakteru regulacji niż~sam wybór algorytmu metaheurystycznego -- pięć przebiegów PSO o~identycznej konfiguracji algorytmu zwróciło pięć jakościowo różnych nastaw regulatora, każdy optymalny w~sensie swojego kryterium.
+Powyższe porównanie potwierdza, że~dobór funkcji celu jest~kluczowy dla~ostatecznego charakteru regulacji -- pięć przebiegów PSO o~identycznej konfiguracji algorytmu zwróciło pięć jakościowo różnych zestawów nastaw regulatora, z~których każdy jest~optymalny w~sensie swojego kryterium.
 
 \subsection{Optymalizacja wielokryterialna w~scenariuszu dynamicznym i~redukcja tętnień prądu}
 \label{subsec:pso-dynamic-scenario}
