@@ -35,7 +35,7 @@ Projekt został zaimplementowany w~języku \textbf{Python~3.12} (z~pełną kompa
 \end{itemize}
 
 \section*{Struktura katalogów i modułów projektu}
-Projekt podzielono na modularne pakiety zgodnie z~zasadami czystej architektury (ang.~\emph{Clean Architecture}):
+Wspólny kod projektu oddzielono od~skryptów eksperymentalnych. Katalogi pod \directory{kroki/} są~ponumerowane zgodnie z~kolejnością prac; przechowują skrypty, dane wejściowe oraz dostępne wyniki danego etapu.
 
 \begin{itemize}
 	\item \directory{src/} -- Rdzeń Bliźniaka Cyfrowego (silnik fizyczny i~sterowniki):
@@ -46,19 +46,21 @@ Projekt podzielono na modularne pakiety zgodnie z~zasadami czystej architektury 
 		\item \texttt{filters.py} -- dyskretne filtry dolnoprzepustowe 1. rzędu Tustina ($T_s = 10~\mu\mathrm{s}$),
 		\item \texttt{config.py} -- klasy konfiguracyjne parametrów obwodu i~symulacji oparte o~dekorator \texttt{@dataclass}.
 	\end{itemize}
-	\item \directory{optymalizacja/} -- Moduły optymalizacji rojem cząstek (PSO) i~analizy wrażliwości:
+	\item \directory{optymalizacja/} -- współdzielone moduły optymalizacji i~analizy:
 	\begin{itemize}
-		\item \texttt{pyswarms\_optimizer.py} -- oficjalny adapter łączący symulator z~biblioteką \texttt{PySwarms},
-		\item \texttt{cost\_functions.py} -- implementacja funkcji celu (MSE, IAE, ITAE, CurrentAware, transient ISE),
-		\item \texttt{optymalizacja\_dwuetapowa\_2d.py} -- skrypt wykonawczy procedury dwutorowej 2D PSO,
-		\item \texttt{badanie\_wrazliwosci.py} -- analiza odporności i~wrażliwości wag $\lambda_i$ oraz $w_{\mathrm{cross}}$,
-		\item \texttt{test\_pyswarms\_porownanie.py} -- skrypt walidacji krzyżowej silnika PySwarms względem procedury referencyjnej.
+		\item \texttt{pyswarms\_optimizer.py} -- adapter łączący symulator z~biblioteką \texttt{PySwarms},
+				\item \texttt{cost\_functions.py}, \texttt{metrics.py} i~\texttt{scenarios.py} -- współdzielone definicje funkcji celu, metryk oraz scenariuszy,
+				\item \texttt{test\_pyswarms\_porownanie.py} -- porównanie wyników optymalizacji PySwarms z~procedurą referencyjną.
 	\end{itemize}
-	\item \directory{tests/} -- Zautomatyzowany zestaw testów jednostkowych i~regresyjnych:
+	\item \directory{kroki/} -- archiwum kolejnych etapów badań:
 	\begin{itemize}
-		\item \texttt{test\_regression.py} -- test regresyjny weryfikujący zgodność bit-w-bit z~zamrożonym baseline'em,
-		\item \texttt{test\_filters.py} -- testy charakterystyk częstotliwościowych filtrów cyfrowych.
+		\item \texttt{01\_silnik\_fizyczny/}--\texttt{05\_walidacja\_silnika\_i\_replay/} -- model, sterownik MF-BB i~jego walidacja względem PSIM,
+		\item \texttt{06\_pso\_i\_funkcje\_celu/}--\texttt{08\_scenariusz\_dynamiczny/} -- strojenie PSO, warianty funkcji celu i~scenariusze dynamiczne,
+		\item \texttt{09\_trend\_mf\_bb/}--\texttt{11\_optymalizacja\_dwuetapowa/} -- regulator Trend MF-BB, porównania częstotliwości i~optymalizacja dwuetapowa,
+		\item \texttt{12\_badanie\_wrazliwosci/}--\texttt{14\_replay\_koncowy/} -- badania wrażliwości, wpływu pojemności i~końcowy replay.
 	\end{itemize}
+	\item \directory{tests/} -- test regresyjny \texttt{test\_regression.py}, skrypt tworzący baseline oraz zamrożone dane \texttt{baseline\_results.npz}.
+	\item \texttt{README.md} -- indeks katalogów \texttt{kroki/} i~instrukcja uruchomienia projektu.
 \end{itemize}
 
 \section*{Instrukcja uruchomienia kluczowych eksperymentów}
@@ -66,19 +68,20 @@ Projekt podzielono na modularne pakiety zgodnie z~zasadami czystej architektury 
 \begin{lstlisting}[language=bash,
 	caption={Polecenia uruchomienia testow, symulacji oraz optymalizacji},
 	label={lst:uruchomienie}]
-	# 1. Uruchomienie testow jednostkowych i regresyjnych
-	pytest tests/
+	# Polecenia wykonuj z katalogu glownego repozytorium
+	# 1. Test regresyjny porownujacy wyniki z baseline'em
+	python tests/test_regression.py
 
-	# 2. Uruchomienie pelnej symulacji porownawczej wzgledem modelu PSIM
-	python porownanie_bb_estim_full_psim.py
+	# 2. Porownanie symulacji z pelnym przebiegiem PSIM
+	PYTHONPATH=. python kroki/04_estymacja_pradu_i_walidacja/porownanie_bb_estim_full_psim.py
 
-	# 3. Wykonanie dwutorowej optymalizacji 2D z uzyciem PySwarms
-	python -m optymalizacja.optymalizacja_dwuetapowa_2d
+	# 3. Dwutorowa optymalizacja 2D
+	PYTHONPATH=. python kroki/11_optymalizacja_dwuetapowa/optymalizacja_dwuetapowa_2d.py
 
-	# 4. Wykonanie pelnego badania wrazliwosci algorytmu PSO
-	python -m optymalizacja.badanie_wrazliwosci
+	# 4. Badanie wrazliwosci algorytmu PSO
+	PYTHONPATH=. python kroki/12_badanie_wrazliwosci/badanie_wrazliwosci.py
 \end{lstlisting}
 
-Wyniki symulacji numerycznych oraz wygenerowane raporty w~formacie PDF i~wykresy PNG zapisywane są bezpośrednio w~katalogu głównym projektu oraz podkatalogu \directory{optymalizacja/}.
+Wspólne moduły pozostają w~katalogach \directory{src/} i~\directory{optymalizacja/}. Skrypty oraz zarchiwizowane dane, wykresy i~raporty eksperymentów są pogrupowane w~odpowiadających im katalogach \directory{kroki/}. Docelowe miejsce zapisu nowych plików określają ścieżki zdefiniowane w~poszczególnych skryptach.
 
 \end{easyappendix}

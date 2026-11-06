@@ -259,6 +259,7 @@ Architekturę repozytorium zaprojektowano zgodnie z~zasadą separacji odpowiedzi
 \begin{itemize}
     \item \directory{src/} -- rdzeń symulatora (moduły: \texttt{converter.py}, \texttt{controller.py}, \texttt{simulator.py}, \texttt{sampler.py}, \texttt{filters.py}, \texttt{config.py});
     \item \directory{optymalizacja/} -- moduły strojenia metaheurystycznego (integracja biblioteki \texttt{PySwarms}, funkcje celu, optymalizacja dwutorowa oraz badanie wrażliwości);
+    \item \directory{kroki/} -- chronologicznie uporządkowane katalogi eksperymentów; każdy z nich gromadzi skrypty danego etapu oraz dostępne dane wejściowe i~wygenerowane wyniki;
     \item \directory{tests/} -- zautomatyzowane skrypty testowe i~zamrożone dane referencyjne (\texttt{test\_regression.py}, \texttt{baseline\_results.npz});
     \item \texttt{requirements.txt} -- specyfikacja zależności z~jawnym zablokowaniem wersji (\texttt{numpy}, \texttt{pyswarms}, \texttt{scipy}, \texttt{matplotlib}, \texttt{reportlab}).
 \end{itemize}
